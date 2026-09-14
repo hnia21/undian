@@ -1,0 +1,47 @@
+<!-- PIN overlay -->
+<div class="overlay" id="pinOverlay">
+  <div class="modal">
+    <h3>Masuk Admin</h3>
+    <p class="hint">Masukkan PIN untuk mengatur undian.</p>
+    <input type="password" id="pinInput" placeholder="PIN" inputmode="numeric">
+    <div id="pinError"></div>
+    <div class="row">
+      <button class="btn-ghost" id="pinCancelBtn">Batal</button>
+      <button class="btn-primary" id="pinSubmitBtn">Masuk</button>
+    </div>
+  </div>
+</div>
+
+<!-- Admin overlay -->
+<div class="overlay" id="adminOverlay">
+  <div class="modal">
+    <h3>Panel Admin</h3>
+    <p class="hint">Pengaturan di sini tidak terlihat oleh peserta. Tampilan utama akan tetap terlihat seperti mengundi secara acak.</p>
+
+    <div class="admin-section">
+      <h4>Sisa Nomor Belum Diundi</h4>
+      <div class="pool-grid" id="poolGrid"></div>
+    </div>
+
+    <div class="admin-section">
+      <h4>Atur Hasil Undian Berikutnya</h4>
+      <p class="small-note">Masukkan satu atau beberapa nomor grup (pisahkan dengan koma) untuk mengatur beberapa undian ke depan sekaligus, misalnya <span style="font-family:monospace">5, 12, 3</span>. Nomor pertama yang ditulis akan keluar pada undian berikutnya, nomor kedua pada undian setelahnya, dan seterusnya. Kosongkan seluruh antrian untuk kembali ke mode acak murni.</p>
+      <div class="row" style="margin-bottom:10px;">
+        <input type="text" id="overrideInput" placeholder="Contoh: 5, 12, 3">
+        <button class="btn-primary" id="addOverrideBtn" style="flex:0 0 auto;">Tambah</button>
+      </div>
+      <div id="overrideList"></div>
+    </div>
+
+    <div class="admin-section">
+      <h4>Ganti PIN Admin</h4>
+      <div class="row">
+        <input type="text" id="newPinInput" placeholder="PIN baru">
+        <button class="btn-primary" id="savePinBtn" style="flex:0 0 auto;">Simpan</button>
+      </div>
+      <p class="small-note">PIN tersimpan di database dan berlaku untuk semua perangkat.</p>
+    </div>
+
+    <button class="btn-ghost" id="closeAdminBtn">Tutup Panel</button>
+  </div>
+</div>

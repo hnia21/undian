@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Undian Nomor Urut Grup</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div class="eyebrow">UNDIAN NOMOR URUT</div>
+  <h1>Undian Nomor Urut Grup</h1>
+  <p class="subtitle">Tekan tombol di bawah untuk mengocok dan menampilkan nomor urut grup berikutnya.</p>
+
+  <div class="ticket">
+    <div class="ticket-label">NOMOR URUT GRUP</div>
+    <div class="reel-row" id="reelRow"></div>
+    <div class="divider"></div>
+    <div class="draw-count">Sisa nomor: <b id="remainingCount">-</b> · Sudah diundi: <b id="drawnCount">0</b></div>
+  </div>
+
+  <div class="max-setting">
+    <label for="maxDrawInput">Undian maksimal</label>
+    <input type="number" id="maxDrawInput" min="1" max="500">
+    <button id="applyMaxBtn">Terapkan</button>
+  </div>
+
+  <button id="drawBtn">Kocok Sekarang</button>
+  <div id="statusMsg"></div>
+
+  <div class="history">
+    <h2>RIWAYAT UNDIAN</h2>
+    <ul id="historyList"></ul>
+  </div>
+
+  <footer>
+    <div id="secretDot" title=""></div>
+    <p>Undian nomor urut grup</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
