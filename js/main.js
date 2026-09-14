@@ -51,6 +51,7 @@
   const secretDot = document.getElementById('secretDot');
   const maxDrawInput = document.getElementById('maxDrawInput');
   const applyMaxBtn = document.getElementById('applyMaxBtn');
+  const resetBtn = document.getElementById('resetBtn');
 
   const pinOverlay = document.getElementById('pinOverlay');
   const pinInput = document.getElementById('pinInput');
@@ -275,6 +276,28 @@
       maxDrawInput.value = state.total;
     }finally{
       applyMaxBtn.disabled = false;
+    }
+  });
+
+  // ---------- RESET UNDIAN ----------
+  resetBtn.addEventListener('click', async ()=>{
+    if(state.remaining.length === state.total && state.history.length === 0 && state.overrideQueue.length === 0) return;
+    if(!confirm(`Reset undian ke awal? Seluruh ${state.history.length} riwayat, ${state.overrideQueue.length} antrian admin, dan ${state.total - state.remaining.length} nomor terpakai akan dihapus.`)) return;
+    resetBtn.disabled = true;
+    try{
+      const { error } = await supabase.rpc('reset_pool', { new_total: state.total });
+      if (error) throw new Error(error.message);
+      await loadState();
+      buildReel();
+      refreshMeta();
+      renderAdminPool();
+      renderAdminQueue();
+      statusMsg.textContent = 'Undian direset ke awal.';
+    }catch(e){
+      console.error(e);
+      alert('Gagal mereset undian: ' + e.message);
+    }finally{
+      resetBtn.disabled = false;
     }
   });
 
