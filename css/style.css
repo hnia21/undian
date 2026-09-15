@@ -186,7 +186,10 @@
     border:none;
   }
   #drawBtn{
+    display:block;
     margin-top:28px;
+    margin-left:auto;
+    margin-right:auto;
     background:linear-gradient(180deg, var(--gold), var(--gold-dim));
     color:#241a05;
     font-weight:800;
