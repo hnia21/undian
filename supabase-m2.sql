@@ -28,6 +28,17 @@ alter table public.groups drop column if exists forced;
 
 alter table public.groups enable row level security;
 
+-- Konfigurasi nomor urut grup dari admin: NO + nama grup.
+-- Entri ini tidak ditampilkan di halaman utama; saat sebuah grup diundi
+-- dan namanya sama dengan salah satu entri, nomor yang tampil memakai NO ini.
+create table if not exists public.group_no_map (
+  id   bigint generated always as identity primary key,
+  no   int  not null,
+  name text not null
+);
+
+alter table public.group_no_map enable row level security;
+
 -- ---------- RPC ----------
 
 -- Ganti seluruh daftar grup.
@@ -143,5 +154,41 @@ set search_path = public
 as $$
 begin
   delete from public.groups where true;
+  delete from public.group_no_map where true;
+end;
+$$;
+
+-- ---------- NO GROUP: konfigurasi nomor urut dari admin ----------
+
+create or replace function public.get_group_no_map()
+returns jsonb
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select coalesce(jsonb_agg(jsonb_build_object('id', id, 'no', no, 'name', name) order by no, id), '[]'::jsonb)
+  from public.group_no_map;
+$$;
+
+-- Ganti seluruh daftar NO + nama grup.
+create or replace function public.save_group_no_map(rows jsonb)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  r jsonb;
+begin
+  delete from public.group_no_map where true;
+  for r in select * from jsonb_array_elements(rows)
+  loop
+    if r->>'name' is null or btrim(r->>'name') = '' then
+      continue;
+    end if;
+    insert into public.group_no_map (no, name)
+    values (coalesce((r->>'no')::int, 0), btrim(r->>'name'));
+  end loop;
 end;
 $$;

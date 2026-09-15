@@ -328,8 +328,95 @@
     margin:-4px 0 8px;
   }
 
-  /* Admin modal specifics */
-  #adminOverlay .modal{ max-width:460px; max-height:88vh; overflow-y:auto; }
+  /* Admin specifics */
+  #adminOverlay{ padding:0; }
+
+  /* ---- ADMIN FULL SCREEN ---- */
+  .admin-screen{
+    width:100%;
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    background:linear-gradient(180deg, #0a2f30, #061819);
+  }
+  .admin-topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    padding:16px 22px;
+    border-bottom:1px solid var(--panel-edge);
+    background:rgba(10,47,48,0.95);
+    position:sticky;
+    top:0;
+    z-index:3;
+    backdrop-filter:blur(4px);
+  }
+  .admin-topbar h3{ margin:0 0 2px; font-size:18px; }
+  .admin-topbar .btn-danger{
+    padding:10px 20px;
+    border-radius:10px;
+    font-size:13px;
+  }
+  .admin-body{
+    width:min(94vw, 780px);
+    margin:0 auto;
+    padding:22px 8px 48px;
+    overflow-y:auto;
+  }
+  .admin-body .row{ margin-top:10px; display:flex; gap:8px; }
+  .admin-body .row button{ flex:1; }
+
+  /* ---- TABEL NO / NAMA GRUP ---- */
+  .no-map{
+    width:100%;
+    border-collapse:collapse;
+    margin-bottom:4px;
+  }
+  .no-map thead th{
+    text-align:left;
+    font-size:11px;
+    letter-spacing:0.06em;
+    color:var(--gold-dim);
+    padding:6px 8px;
+    border-bottom:1px solid var(--panel-edge);
+    text-transform:uppercase;
+  }
+  .no-map tbody tr{ border-bottom:1px solid rgba(159,192,188,0.10); }
+  .no-map tbody tr:last-child{ border-bottom:none; }
+  .no-map td{ padding:6px; }
+  .no-map input[type=number],
+  .no-map input[type=text]{
+    width:100%;
+    background:#06181a;
+    border:1px solid var(--panel-edge);
+    color:var(--cream);
+    padding:8px 10px;
+    border-radius:8px;
+    font-size:14px;
+    font-family:inherit;
+  }
+  .no-map input[type=number]{
+    min-width:64px;
+    width:90px;
+    text-align:center;
+    font-family:monospace;
+  }
+  .no-map td.del{ width:38px; text-align:center; }
+  .no-map td.del button{
+    background:none;
+    color:var(--danger);
+    font-size:16px;
+    line-height:1;
+    padding:4px 6px;
+    cursor:pointer;
+    border:1px solid transparent;
+    border-radius:6px;
+  }
+  .no-map td.del button:hover{
+    border-color:rgba(228,87,46,0.5);
+    background:rgba(228,87,46,0.08);
+  }
   .admin-section{
     border-top:1px solid var(--panel-edge);
     padding-top:14px;

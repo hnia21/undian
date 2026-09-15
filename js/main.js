@@ -85,6 +85,10 @@
   const saveGroupsForceBtn = document.getElementById('saveGroupsForceBtn');
   const resetGroupDrawBtn = document.getElementById('resetGroupDrawBtn');
   const clearGroupDataBtn = document.getElementById('clearGroupDataBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const noMapBody = document.getElementById('noMapBody');
+  const addNoMapRowBtn = document.getElementById('addNoMapRowBtn');
+  const saveNoMapBtn = document.getElementById('saveNoMapBtn');
   const confirmOverlay = document.getElementById('confirmOverlay');
   const confirmTitle = document.getElementById('confirmTitle');
   const confirmMsg = document.getElementById('confirmMsg');
@@ -97,6 +101,7 @@
   // ---------- MODE 2 STATE ----------
   const m2 = {
     groups: [],       // [{id, name, drawn, order_seq}]
+    noMap: [],        // [{id, no, name}] konfigurasi NO dari admin
   };
 
   // ---------- CONFIG CHECK ----------
@@ -348,7 +353,7 @@
   async function openAdmin(){
     if(!adminOverlay) return;
     try{
-      await loadGroups();
+      await Promise.all([loadGroups(), loadNoMap()]);
       refreshGroupViews();
     }catch(e){
       console.warn('Data Mode 2 gagal dimuat ulang:', e.message);
@@ -357,10 +362,18 @@
     renderAdminQueue();
     renderGroupsForceInput();
     renderGroupsAdmin();
+    renderNoMap();
     adminOverlay.classList.add('show');
   }
   if(adminOverlay){
     closeAdminBtn.addEventListener('click', ()=>adminOverlay.classList.remove('show'));
+    logoutBtn.addEventListener('click', ()=>{
+      adminOverlay.classList.remove('show');
+      pinOverlay.classList.add('show');
+      pinInput.value = '';
+      pinError.textContent = '';
+      pinSubmitBtn.disabled = false;
+    });
   }
 
   function renderAdminPool(){
@@ -512,6 +525,100 @@
     renderGroupHistory();
     renderGroupsAdmin();
     renderGroupsForceInput();
+    renderNoMap();
+  }
+
+  // ---------- KONFIGURASI NO GRUP (ADMIN) ----------
+  async function loadNoMap(){
+    const { data, error } = await supabase.rpc('get_group_no_map');
+    if (error) throw new Error(error.message);
+    m2.noMap = data;
+  }
+  function noForGroup(name){
+    const key = String(name).trim().toLowerCase();
+    const e = m2.noMap.find(x=>String(x.name).trim().toLowerCase() === key);
+    return e ? e.no : null;
+  }
+  function renderNoMap(){
+    if(!noMapBody) return;
+    noMapBody.innerHTML = '';
+    m2.noMap.forEach((e, i)=>{
+      const tr = document.createElement('tr');
+      const tdNo = document.createElement('td');
+      const no = document.createElement('input');
+      no.type = 'number';
+      no.min = '1';
+      no.value = e.no;
+      no.dataset.row = i;
+      no.className = 'noMapNo';
+      tdNo.appendChild(no);
+      const tdName = document.createElement('td');
+      const name = document.createElement('input');
+      name.type = 'text';
+      name.value = e.name;
+      name.dataset.row = i;
+      name.className = 'noMapName';
+      tdName.appendChild(name);
+      const tdDel = document.createElement('td');
+      tdDel.className = 'del';
+      const del = document.createElement('button');
+      del.textContent = '×';
+      del.onclick = ()=>tr.remove();
+      tdDel.appendChild(del);
+      tr.append(tdNo, tdName, tdDel);
+      noMapBody.appendChild(tr);
+    });
+  }
+  function addNoMapRow(){
+    if(!noMapBody) return;
+    const tr = document.createElement('tr');
+    const tdNo = document.createElement('td');
+    const no = document.createElement('input');
+    no.type = 'number';
+    no.min = '1';
+    no.value = '';
+    tdNo.appendChild(no);
+    const tdName = document.createElement('td');
+    const name = document.createElement('input');
+    name.type = 'text';
+    name.placeholder = 'Nama grup';
+    tdName.appendChild(name);
+    const tdDel = document.createElement('td');
+    tdDel.className = 'del';
+    const del = document.createElement('button');
+    del.textContent = '×';
+    del.onclick = ()=>tr.remove();
+    tdDel.appendChild(del);
+    tr.append(tdNo, tdName, tdDel);
+    noMapBody.appendChild(tr);
+    name.focus();
+  }
+  function collectNoMap(){
+    return [...noMapBody.querySelectorAll('tr')].map(tr=>{
+      const no = parseInt(tr.querySelector('.noMapNo')?.value, 10);
+      const name = (tr.querySelector('.noMapName')?.value || '').trim();
+      return { no: isFinite(no) ? no : null, name };
+    }).filter(r=>r.name);
+  }
+  if(adminOverlay){
+    addNoMapRowBtn.addEventListener('click', addNoMapRow);
+    saveNoMapBtn.addEventListener('click', async ()=>{
+      saveNoMapBtn.disabled = true;
+      try{
+        const rows = collectNoMap();
+        const { error } = await supabase.rpc('save_group_no_map', { rows });
+        if (error) throw new Error(error.message);
+        await loadNoMap();
+        renderNoMap();
+        renderGroupHistory();
+        groupStatusMsg.textContent = `Nomor urut tersimpan: ${m2.noMap.length} entri.`;
+      }catch(e){
+        console.error(e);
+        alert('Gagal menyimpan nomor urut: ' + e.message);
+      }finally{
+        saveNoMapBtn.disabled = false;
+      }
+    });
   }
 
   function saveGroupsFlow(srcBtn, srcInput, msg){
@@ -565,7 +672,7 @@
       .slice()
       .sort((a,b)=>(a.order_seq || 0) - (b.order_seq || 0))
       .forEach(g=>{
-        addGroupHistory(Object.assign({}, g, { order: g.order_seq }));
+        addGroupHistory(Object.assign({}, g, { order: noForGroup(g.name) || g.order_seq }));
       });
   }
 
@@ -585,8 +692,9 @@
         groupStatusMsg.textContent = 'Semua grup sudah diundi.';
         return;
       }
-      showGroupResult(data);
-      addGroupHistory(data);
+      const no = noForGroup(data.name) || data.order;
+      showGroupResult(Object.assign({}, data, { order: no }));
+      addGroupHistory(Object.assign({}, data, { order: no }));
       await loadGroups();
       refreshGroupViews();
       confettiBurst();
@@ -666,6 +774,7 @@
       const { error } = await supabase.rpc('clear_group_data');
       if (error) throw new Error(error.message);
       m2.groups = [];
+      m2.noMap = [];
       refreshGroupViews();
       renderGroupHistory();
       groupResult.classList.remove('show');
@@ -786,10 +895,11 @@
 
   // mode 2 (best-effort; tidak mengganggu mode 1 jika sekema belum ada)
   try{
-    await loadGroups();
+    await Promise.all([loadGroups(), loadNoMap()]);
     renderGroupChips();
     renderGroupHistory();
     renderGroupsAdmin();
+    renderNoMap();
   }catch(e){
     console.warn('Data Mode 2 tidak dapat dimuat:', e.message);
     groupStatusMsg.textContent = 'Mode 2 butuh supabase-m2.sql (jalankan di SQL Editor).';

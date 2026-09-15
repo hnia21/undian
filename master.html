@@ -14,51 +14,75 @@
 
 <!-- Admin overlay -->
 <div class="overlay" id="adminOverlay">
-  <div class="modal">
-    <h3>Panel Admin</h3>
-    <p class="hint">Pengaturan di sini tidak terlihat oleh peserta. Tampilan utama akan tetap terlihat seperti mengundi secara acak.</p>
-
-    <div class="admin-section">
-      <h4>Sisa Nomor Belum Diundi</h4>
-      <div class="pool-grid" id="poolGrid"></div>
-    </div>
-
-    <div class="admin-section">
-      <h4>Atur Hasil Undian Berikutnya</h4>
-      <p class="small-note">Masukkan satu atau beberapa nomor grup (pisahkan dengan koma) untuk mengatur beberapa undian ke depan sekaligus, misalnya <span style="font-family:monospace">5, 12, 3</span>. Nomor pertama yang ditulis akan keluar pada undian berikutnya, nomor kedua pada undian setelahnya, dan seterusnya. Kosongkan seluruh antrian untuk kembali ke mode acak murni.</p>
-      <div class="row" style="margin-bottom:10px;">
-        <input type="text" id="overrideInput" placeholder="Contoh: 5, 12, 3">
-        <button class="btn-primary" id="addOverrideBtn" style="flex:0 0 auto;">Tambah</button>
+  <div class="admin-screen">
+    <div class="admin-topbar">
+      <div>
+        <h3>Panel Admin</h3>
+        <p class="hint" style="margin:0;">Pengaturan di sini tidak terlihat oleh peserta.</p>
       </div>
-      <div id="overrideList"></div>
+      <button class="btn-danger" id="logoutBtn">Logout</button>
     </div>
 
-    <div class="admin-section">
-      <h4>Atur Hasil Undian Grup (Mode 2)</h4>
-      <p class="small-note">Masukkan urutan undian berdasarkan <b>nomor urut grup</b> pada daftar di bawah, dipisahkan koma. Contoh: <span style="font-family:monospace">3, 1, 2</span> berarti urutan ke-3 diundi duluan. Kosongkan untuk kembali ke mode acak murni.</p>
-      <input type="text" id="groupsForceInput" placeholder="Contoh: 3, 1, 2">
-      <button class="btn-primary" id="saveGroupsForceBtn" style="margin-top:8px;">Simpan Antrian Grup</button>
-    </div>
+    <div class="admin-body">
 
-    <div class="admin-section">
-      <h4>Status Undian Grup (Mode 2)</h4>
-      <p class="small-note">Grup yang sudah diundi tidak dapat diundi lagi sampai direset.</p>
-      <div id="groupsAdmin"></div>
-      <div class="row" style="margin-top:10px;">
-        <button class="btn-danger" id="resetGroupDrawBtn" style="flex:1;">Reset Undian Grup</button>
-        <button class="btn-ghost" id="clearGroupDataBtn" style="flex:1;">Hapus Semua Data Grup</button>
+      <div class="admin-section">
+        <h4>Sisa Nomor Belum Diundi</h4>
+        <div class="pool-grid" id="poolGrid"></div>
       </div>
-    </div>
 
-    <div class="admin-section">
-      <h4>Ganti PIN Admin</h4>
-      <div class="row">
-        <input type="text" id="newPinInput" placeholder="PIN baru">
-        <button class="btn-primary" id="savePinBtn" style="flex:0 0 auto;">Simpan</button>
+      <div class="admin-section">
+        <h4>Atur Hasil Undian Berikutnya</h4>
+        <p class="small-note">Masukkan satu atau beberapa nomor grup (pisahkan dengan koma) untuk mengatur beberapa undian ke depan sekaligus, misalnya <span style="font-family:monospace">5, 12, 3</span>. Nomor pertama yang ditulis akan keluar pada undian berikutnya, nomor kedua pada undian setelahnya, dan seterusnya. Kosongkan seluruh antrian untuk kembali ke mode acak murni.</p>
+        <div class="row" style="margin-bottom:10px;">
+          <input type="text" id="overrideInput" placeholder="Contoh: 5, 12, 3">
+          <button class="btn-primary" id="addOverrideBtn" style="flex:0 0 auto;">Tambah</button>
+        </div>
+        <div id="overrideList"></div>
       </div>
-      <p class="small-note">PIN tersimpan di database dan berlaku untuk semua perangkat.</p>
-    </div>
 
-    <button class="btn-ghost" id="closeAdminBtn">Tutup Panel</button>
+      <div class="admin-section">
+        <h4>Nomor Urut Grup (Mode 2)</h4>
+        <p class="small-note">Daftar ini tidak tampil di halaman utama. Saat sebuah grup diundi dan namanya sama dengan salah satu entri, nomor yang muncul diambil dari kolom NO di sini. Edit langsung, tambah/hapus baris, lalu Simpan.</p>
+        <table class="no-map" id="noMapTable">
+          <thead>
+            <tr><th>NO</th><th>NAMA GRUP</th><th></th></tr>
+          </thead>
+          <tbody id="noMapBody"></tbody>
+        </table>
+        <div class="row" style="margin-top:10px;">
+          <button class="btn-ghost" id="addNoMapRowBtn" style="flex:0 0 auto;">Tambah Baris</button>
+          <button class="btn-primary" id="saveNoMapBtn" style="flex:1;">Simpan Nomor Urut</button>
+        </div>
+      </div>
+
+      <div class="admin-section">
+        <h4>Atur Hasil Undian Grup (Mode 2)</h4>
+        <p class="small-note">Masukkan urutan undian berdasarkan <b>nomor urut grup</b> pada daftar di bawah, dipisahkan koma. Contoh: <span style="font-family:monospace">3, 1, 2</span> berarti urutan ke-3 diundi duluan. Kosongkan untuk kembali ke mode acak murni.</p>
+        <input type="text" id="groupsForceInput" placeholder="Contoh: 3, 1, 2">
+        <button class="btn-primary" id="saveGroupsForceBtn" style="margin-top:8px;">Simpan Antrian Grup</button>
+      </div>
+
+      <div class="admin-section">
+        <h4>Status Undian Grup (Mode 2)</h4>
+        <p class="small-note">Grup yang sudah diundi tidak dapat diundi lagi sampai direset.</p>
+        <div id="groupsAdmin"></div>
+        <div class="row" style="margin-top:10px;">
+          <button class="btn-danger" id="resetGroupDrawBtn" style="flex:1;">Reset Undian Grup</button>
+          <button class="btn-ghost" id="clearGroupDataBtn" style="flex:1;">Hapus Semua Data Grup</button>
+        </div>
+      </div>
+
+      <div class="admin-section">
+        <h4>Ganti PIN Admin</h4>
+        <div class="row">
+          <input type="text" id="newPinInput" placeholder="PIN baru">
+          <button class="btn-primary" id="savePinBtn" style="flex:0 0 auto;">Simpan</button>
+        </div>
+        <p class="small-note">PIN tersimpan di database dan berlaku untuk semua perangkat.</p>
+      </div>
+
+      <button class="btn-ghost" id="closeAdminBtn">Tutup Panel</button>
+
+    </div>
   </div>
 </div>
