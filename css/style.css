@@ -393,3 +393,179 @@
   @keyframes fall{
     to{ transform: translateY(110vh) rotate(var(--rot)); opacity:0.9; }
   }
+
+  /* ---- MODE TABS ---- */
+  .mode-tabs{
+    display:flex; gap:8px;
+    margin-bottom:34px;
+    background:rgba(159,192,188,0.06);
+    border:1px solid var(--panel-edge);
+    border-radius:12px;
+    padding:6px;
+  }
+  .mode-tab{
+    background:transparent;
+    color:var(--muted);
+    font-size:13px;
+    font-weight:700;
+    padding:9px 16px;
+    border-radius:8px;
+    transition: background .12s ease, color .12s ease;
+  }
+  .mode-tab:hover{ color:var(--cream); }
+  .mode-tab.active{
+    background:var(--gold);
+    color:#241a05;
+  }
+  .mode{ display:none; }
+  .mode.active{ display:block; }
+
+  /* ---- MODE 2 ---- */
+  .mode2-panel{
+    width:min(92vw, 460px);
+    background:linear-gradient(160deg, var(--panel), #0a2f30);
+    border:1px solid var(--panel-edge);
+    border-radius:16px;
+    padding:18px;
+    margin-bottom:16px;
+  }
+  .mode2-panel h3{
+    margin:0 0 4px;
+    font-size:15px;
+    color:var(--gold);
+  }
+  .mode2-panel textarea{
+    width:100%;
+    background:#06181a;
+    border:1px solid var(--panel-edge);
+    color:var(--cream);
+    padding:10px 12px;
+    border-radius:8px;
+    font-size:14px;
+    font-family: inherit;
+    resize:vertical;
+    margin-bottom:10px;
+  }
+  .chip-list{
+    display:flex; flex-wrap:wrap; gap:6px;
+    margin-top:10px;
+  }
+  .chip-list .chip{
+    background:rgba(159,192,188,0.10);
+    border:1px solid var(--panel-edge);
+    color:var(--muted);
+    font-size:12px;
+    padding:4px 9px;
+    border-radius:6px;
+  }
+  #drawGroupBtn{
+    margin-top:22px;
+    background:linear-gradient(180deg, var(--gold), var(--gold-dim));
+    color:#241a05;
+    font-weight:800;
+    font-size:16px;
+    padding:16px 40px;
+    border-radius:14px;
+    box-shadow: 0 12px 24px -10px rgba(232,181,77,0.5);
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  #drawGroupBtn:hover{ transform:translateY(-1px); }
+  #drawGroupBtn:active{ transform:translateY(1px); }
+  #drawGroupBtn:disabled{
+    opacity:0.5;
+    cursor:not-allowed;
+    box-shadow:none;
+  }
+  #groupStatusMsg{
+    margin-top:14px;
+    font-size:13px;
+    color:var(--muted);
+    min-height:18px;
+    text-align:center;
+  }
+  .group-result{
+    display:none;
+    width:min(92vw, 460px);
+    margin-top:18px;
+    background:linear-gradient(160deg, #123c3d, #0a2f30);
+    border:1px solid rgba(232,181,77,0.45);
+    border-radius:18px;
+    padding:24px;
+    text-align:center;
+    box-shadow: 0 20px 50px -18px rgba(0,0,0,0.6);
+  }
+  .group-result.show{ display:block; }
+  .group-result .grp-name{
+    font-size:clamp(22px,5vw,30px);
+    font-weight:800;
+    color:var(--gold);
+    margin-bottom:14px;
+  }
+  .group-result ul{
+    list-style:none; margin:0; padding:0;
+    display:flex; flex-wrap:wrap; gap:8px;
+    justify-content:center;
+  }
+  .group-result li{
+    background:rgba(232,181,77,0.10);
+    border:1px solid rgba(232,181,77,0.25);
+    color:var(--cream);
+    font-weight:600;
+    padding:7px 14px;
+    border-radius:8px;
+    font-size:15px;
+  }
+  .group-result .empty-note{
+    color:var(--muted);
+    font-size:13px;
+  }
+  #groupHistory .hist-group{
+    display:flex; flex-direction:column; gap:4px;
+    background:rgba(159,192,188,0.06);
+    border:1px solid var(--panel-edge);
+    padding:10px 12px;
+    border-radius:10px;
+    margin-bottom:8px;
+  }
+  #groupHistory .hist-group .hg-name{
+    color:var(--gold);
+    font-weight:700;
+    font-size:13px;
+  }
+  #groupHistory .hist-group .hg-members{
+    color:var(--muted);
+    font-size:12px;
+    line-height:1.5;
+  }
+
+  /* ---- ADMIN: atur peserta per grup ---- */
+  .group-admin{
+    background:#06181a;
+    border:1px solid var(--panel-edge);
+    border-radius:10px;
+    padding:12px;
+    margin-bottom:10px;
+  }
+  .group-admin .ga-head{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:8px;
+  }
+  .group-admin .ga-head b{ color:var(--gold); font-size:13px; }
+  .group-admin .ga-head span{ color:var(--muted); font-size:11px; }
+  .group-admin .ga-members{
+    display:flex; flex-wrap:wrap; gap:8px;
+    max-height:140px; overflow-y:auto;
+    padding:4px 2px;
+  }
+  .group-admin label{
+    display:flex; align-items:center; gap:6px;
+    font-size:12px;
+    color:var(--muted);
+    background:rgba(159,192,188,0.06);
+    border:1px solid var(--panel-edge);
+    border-radius:6px;
+    padding:4px 8px;
+    cursor:pointer;
+  }
+  .group-admin label input{ accent-color:var(--gold); }
+  .group-admin .ga-empty{ color:var(--muted); font-size:12px; }

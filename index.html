@@ -8,32 +8,73 @@
 </head>
 <body>
 
-  <div class="eyebrow">UNDIAN NOMOR URUT</div>
-  <h1>Undian Nomor Urut Grup</h1>
-  <p class="subtitle">Tekan tombol di bawah untuk mengocok dan menampilkan nomor urut grup berikutnya.</p>
-
-  <div class="ticket">
-    <div class="ticket-label">NOMOR URUT GRUP</div>
-    <div class="reel-row" id="reelRow"></div>
-    <div class="divider"></div>
-    <div class="draw-count">Sisa nomor: <b id="remainingCount">-</b> · Sudah diundi: <b id="drawnCount">0</b></div>
+  <div class="mode-tabs" id="modeTabs">
+    <button class="mode-tab active" data-mode="1" id="mode1Tab">Mode 1 · Nomor Urut</button>
+    <button class="mode-tab" data-mode="2" id="mode2Tab">Mode 2 · Undian Grup</button>
   </div>
 
-  <div class="max-setting">
-    <label for="maxDrawInput">Undian maksimal</label>
-    <input type="number" id="maxDrawInput" min="1" max="500">
-    <button id="applyMaxBtn">Terapkan</button>
-  </div>
+  <!-- ============ MODE 1 ============ -->
+  <section class="mode active" id="mode1">
+    <div class="eyebrow">UNDIAN NOMOR URUT</div>
+    <h1>Undian Nomor Urut Grup</h1>
+    <p class="subtitle">Tekan tombol di bawah untuk mengocok dan menampilkan nomor urut grup berikutnya.</p>
 
-  <button id="resetBtn">Reset Undian</button>
+    <div class="ticket">
+      <div class="ticket-label">NOMOR URUT GRUP</div>
+      <div class="reel-row" id="reelRow"></div>
+      <div class="divider"></div>
+      <div class="draw-count">Sisa nomor: <b id="remainingCount">-</b> · Sudah diundi: <b id="drawnCount">0</b></div>
+    </div>
 
-  <button id="drawBtn">Kocok Sekarang</button>
-  <div id="statusMsg"></div>
+    <div class="max-setting">
+      <label for="maxDrawInput">Undian maksimal</label>
+      <input type="number" id="maxDrawInput" min="1" max="500">
+      <button id="applyMaxBtn">Terapkan</button>
+    </div>
 
-  <div class="history">
-    <h2>RIWAYAT UNDIAN</h2>
-    <ul id="historyList"></ul>
-  </div>
+    <button id="resetBtn">Reset Undian</button>
+
+    <button id="drawBtn">Kocok Sekarang</button>
+    <div id="statusMsg"></div>
+
+    <div class="history">
+      <h2>RIWAYAT UNDIAN</h2>
+      <ul id="historyList"></ul>
+    </div>
+  </section>
+
+  <!-- ============ MODE 2 ============ -->
+  <section class="mode" id="mode2">
+    <div class="eyebrow">UNDIAN GRUP</div>
+    <h1>Undian Grup &amp; Peserta</h1>
+    <p class="subtitle">Input daftar peserta dan nama grup, lalu kocok. Setiap klik menampilkan sebuah grup beserta daftar pesertanya.</p>
+
+    <div class="mode2-panel">
+      <h3>Daftar Peserta</h3>
+      <p class="small-note">Tulis satu nama per baris, lalu Simpan.</p>
+      <textarea id="participantInput" rows="6" placeholder="Andi&#10;Budi&#10;Cici&#10;..."></textarea>
+      <button class="btn-primary" id="saveParticipantsBtn">Simpan Peserta</button>
+      <div class="chip-list" id="participantChips"></div>
+    </div>
+
+    <div class="mode2-panel">
+      <h3>Nama Grup</h3>
+      <p class="small-note">Tulis satu nama grup per baris, lalu Simpan.</p>
+      <textarea id="groupInput" rows="4" placeholder="Grup A&#10;Grup B&#10;..."></textarea>
+      <button class="btn-primary" id="saveGroupsBtn">Simpan Grup</button>
+      <div class="chip-list" id="groupChips"></div>
+    </div>
+
+    <button id="drawGroupBtn">Kocok Grup</button>
+    <div id="groupStatusMsg"></div>
+
+    <div class="group-result" id="groupResult"></div>
+
+    <div class="history" id="groupHistoryWrap">
+      <h2>HASIL UNDIAN GRUP</h2>
+      <div id="groupHistory"></div>
+    </div>
+  </section>
 
   <footer>
     <div id="secretDot" title=""></div>
