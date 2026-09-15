@@ -290,9 +290,16 @@
     const n = parseInt(maxDrawInput.value, 10);
     if(!n || n < 1) return;
     if(n === state.total) return;
-    if(state.history.length > 0 && !confirm(`Ubah undian maksimal menjadi ${n}? Riwayat undian saat ini akan terhapus.`)) {
-      maxDrawInput.value = state.total;
-      return;
+    if(state.history.length > 0){
+      const ok = await askConfirm({
+        title: 'Ubah Undian Maksimal',
+        message: `Ubah undian maksimal menjadi ${n}? Seluruh ${state.history.length} riwayat undian saat ini akan terhapus.`,
+        okLabel: 'Ubah',
+      });
+      if(!ok){
+        maxDrawInput.value = state.total;
+        return;
+      }
     }
     applyMaxBtn.disabled = true;
     try{
@@ -315,7 +322,12 @@
   // ---------- RESET UNDIAN ----------
   resetBtn.addEventListener('click', async ()=>{
     if(state.remaining.length === state.total && state.history.length === 0 && state.overrideQueue.length === 0) return;
-    if(!confirm(`Reset undian ke awal? Seluruh ${state.history.length} riwayat, ${state.overrideQueue.length} antrian admin, dan ${state.total - state.remaining.length} nomor terpakai akan dihapus.`)) return;
+    const ok = await askConfirm({
+      title: 'Reset Undian',
+      message: `Kembalikan undian ke awal? Seluruh ${state.history.length} riwayat, ${state.overrideQueue.length} antrian admin, dan ${state.total - state.remaining.length} nomor terpakai akan dihapus.`,
+      okLabel: 'Reset Undian',
+    });
+    if(!ok) return;
     resetBtn.disabled = true;
     try{
       const { error } = await supabase.rpc('reset_pool', { new_total: state.total });
