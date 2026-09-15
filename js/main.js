@@ -81,7 +81,7 @@
   const groupResult = document.getElementById('groupResult');
   const groupHistory = document.getElementById('groupHistory');
   const groupsAdmin = document.getElementById('groupsAdmin');
-  const groupsAdminForce = document.getElementById('groupsAdminForce');
+  const groupsForceInput = document.getElementById('groupsForceInput');
   const saveGroupsForceBtn = document.getElementById('saveGroupsForceBtn');
   const resetGroupDrawBtn = document.getElementById('resetGroupDrawBtn');
   const clearGroupDataBtn = document.getElementById('clearGroupDataBtn');
@@ -355,7 +355,7 @@
     }
     renderAdminPool();
     renderAdminQueue();
-    renderGroupsAdminForce();
+    renderGroupsForceInput();
     renderGroupsAdmin();
     adminOverlay.classList.add('show');
   }
@@ -511,7 +511,7 @@
     renderGroupChips();
     renderGroupHistory();
     renderGroupsAdmin();
-    renderGroupsAdminForce();
+    renderGroupsForceInput();
   }
 
   function saveGroupsFlow(srcBtn, srcInput, msg){
@@ -682,43 +682,46 @@
   }
 
   // ---------- ADMIN MODE 2 ----------
-  function renderGroupsAdminForce(){
-    if(!groupsAdminForce) return;
-    groupsAdminForce.innerHTML = '';
-    const undrawn = m2.groups.filter(g=>!g.drawn);
-    if(!undrawn.length){
-      const p = document.createElement('p');
-      p.className = 'ga-empty';
-      p.textContent = 'Semua grup sudah diundi.';
-      groupsAdminForce.appendChild(p);
-      return;
-    }
-    undrawn.forEach(g=>{
-      const lab = document.createElement('label');
-      lab.className = 'ga-force';
-      const cb = document.createElement('input');
-      cb.type = 'checkbox';
-      cb.value = g.id;
-      cb.checked = !!g.forced;
-      lab.appendChild(cb);
-      lab.appendChild(document.createTextNode(g.name + (g.forced ? ' · antrian' : '')));
-      groupsAdminForce.appendChild(lab);
-    });
+  function groupPosition(g){
+    return m2.groups.findIndex(x=>x.id === g.id) + 1;
+  }
+  function renderGroupsForceInput(){
+    if(!groupsForceInput) return;
+    const q = m2.groups
+      .filter(g=>g.forceSeq != null)
+      .sort((a,b)=>(a.forceSeq||0) - (b.forceSeq||0))
+      .map(g=>groupPosition(g));
+    groupsForceInput.value = q.join(', ');
   }
 
   if(adminOverlay){
     saveGroupsForceBtn.addEventListener('click', async ()=>{
       saveGroupsForceBtn.disabled = true;
       try{
-        const ids = [...groupsAdminForce.querySelectorAll('input:checked')].map(i=>parseInt(i.value, 10));
+        const raw = groupsForceInput.value.trim();
+        const ids = [];
+        const skipped = [];
+        const seen = new Set();
+        if(raw){
+          raw.split(/[,\s]+/).filter(Boolean).forEach(part=>{
+            const n = parseInt(part, 10);
+            const g = m2.groups[n - 1];
+            if(!g){ skipped.push(part); return; }
+            if(g.drawn){ skipped.push(part); return; }
+            if(seen.has(g.id)){ skipped.push(part); return; }
+            seen.add(g.id);
+            ids.push(g.id);
+          });
+        }
         const { error } = await supabase.rpc('set_groups_forced', { p_group_ids: ids });
         if (error) throw new Error(error.message);
         await loadGroups();
-        renderGroupsAdminForce();
+        renderGroupsForceInput();
         renderGroupsAdmin();
         groupStatusMsg.textContent = ids.length
           ? `Antrian undian grup disimpan: ${ids.length} grup.`
           : 'Mode acak murni (tanpa antrian).';
+        if(skipped.length) alert(`Dilewati: ${skipped.join(', ')} (nomor di luar daftar, sudah diundi, atau duplikat).`);
       }catch(e){
         console.error(e);
         alert('Gagal menyimpan antrian grup: ' + e.message);
@@ -738,17 +741,21 @@
       groupsAdmin.appendChild(p);
       return;
     }
-    m2.groups.forEach(g=>{
+    m2.groups.forEach((g, idx)=>{
       const box = document.createElement('div');
       box.className = 'group-admin';
       const head = document.createElement('div');
       head.className = 'ga-head';
       const b = document.createElement('b');
+      const num = document.createElement('span');
+      num.className = 'ga-num';
+      num.textContent = '#' + (idx + 1);
+      head.appendChild(num);
       b.textContent = g.name;
       const st = document.createElement('span');
       st.textContent = g.drawn
         ? `diundi ke-${g.order_seq || '?'}`
-        : (g.forced ? 'antrian berikutnya' : 'belum diundi');
+        : (g.forceSeq != null ? `antrian urutan ${g.forceSeq}` : 'belum diundi');
       head.append(b, st);
       box.appendChild(head);
       groupsAdmin.appendChild(box);

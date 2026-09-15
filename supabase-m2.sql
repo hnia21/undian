@@ -17,12 +17,14 @@ create table if not exists public.groups (
   name text not null,
   drawn boolean not null default false,
   order_seq int,
-  forced boolean not null default false
+  force_seq int
 );
 
 -- idempotent: tambahkan kolom jika tabel sudah ada dari versi sebelumnya
 alter table public.groups add column if not exists order_seq int;
-alter table public.groups add column if not exists forced   boolean not null default false;
+alter table public.groups add column if not exists force_seq int;
+-- migrasi: kolom checkbox lama diganti kolom urutan angka
+alter table public.groups drop column if exists forced;
 
 alter table public.groups enable row level security;
 
@@ -57,24 +59,31 @@ as $$
       'name',     name,
       'drawn',    drawn,
       'order_seq', order_seq,
-      'forced',   forced
+      'forceSeq', force_seq
     ) order by id), '[]'::jsonb)
   from public.groups;
 $$;
 
--- Admin: tentukan urutan undian berikutnya. Hanya grup yang belum
--- diundi yang dijamin. Mengosongkan antrian mengembalikan ke acak.
+-- Admin: tentukan urutan undian berikutnya lewat nomor urut grup
+-- (posisi grup dalam daftar). Array berisi id grup sesuai urutan
+-- antrian; nilainya disimpan ke force_seq. Antrian kosong = acak.
 create or replace function public.set_groups_forced(p_group_ids bigint[])
 returns void
 language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  i   int := 1;
+  pid bigint;
 begin
-  update public.groups set forced = false where true;
-  update public.groups set forced = true
-  where id = any(p_group_ids)
-    and not drawn;
+  update public.groups set force_seq = null where true;
+  foreach pid in array p_group_ids loop
+    update public.groups set force_seq = i
+    where id = pid
+      and not drawn;
+    i := i + 1;
+  end loop;
 end;
 $$;
 
@@ -92,7 +101,7 @@ begin
   select * into g
   from public.groups
   where not drawn
-  order by forced desc, id
+  order by (force_seq is null) asc, force_seq asc, id asc
   limit 1;
 
   if g.id is null then
@@ -121,7 +130,7 @@ security definer
 set search_path = public
 as $$
 begin
-  update public.groups set drawn = false, order_seq = null, forced = false where true;
+  update public.groups set drawn = false, order_seq = null, force_seq = null where true;
 end;
 $$;
 
