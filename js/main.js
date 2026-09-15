@@ -676,35 +676,59 @@
       });
   }
 
-  function rollNames(pool, n){
-    const out = [];
-    const src = pool.slice();
-    while(out.length < n){
-      if(!src.length) src.push(...pool);
-      const i = Math.floor(Math.random() * src.length);
-      out.push(src.splice(i, 1)[0]);
-    }
-    return out;
-  }
-  function playGroupRoll(finalName){
+  function playSlotRoll(finalName){
     return new Promise(resolve=>{
       const pool = (m2.groups.length ? m2.groups.map(g=>g.name) : []).filter(Boolean);
-      const names = rollNames(pool.length ? pool : [finalName], 18).concat([finalName]);
+      const base = pool.length ? pool : [finalName];
+      function pick(){ return base[Math.floor(Math.random() * base.length)]; }
       groupResult.classList.add('show');
       groupResult.innerHTML =
-        '<div class="grp-rolling-hint">Mengocok undian grup...</div><div class="grp-rolling"></div>';
-      const el = groupResult.querySelector('.grp-rolling');
-      let i = 0;
-      const tick = ()=>{
-        el.textContent = names[i];
-        el.classList.remove('flip');
-        void el.offsetWidth;
-        el.classList.add('flip');
-        i++;
-        if(i < names.length) setTimeout(tick, 90 + Math.min(i * 24, 130));
-        else resolve();
-      };
-      tick();
+        '<div class="grp-rolling-hint">Mengocok undian grup...</div>' +
+        '<div class="slot-machine">' +
+          '<div class="slot-reel"><div class="slot-strip"></div></div>' +
+          '<div class="slot-reel"><div class="slot-strip"></div></div>' +
+          '<div class="slot-reel"><div class="slot-strip"></div></div>' +
+        '</div>';
+      const stripEls = [...groupResult.querySelectorAll('.slot-strip')];
+      const ITEM = 54;
+      function spin(strip, arr, delay, duration){
+        return new Promise(res=>{
+          setTimeout(()=>{
+            strip.innerHTML = '';
+            arr.forEach(nm=>{
+              const d = document.createElement('div');
+              d.className = 'slot-item';
+              d.textContent = nm;
+              strip.appendChild(d);
+            });
+            strip.classList.add('moving');
+            const total = ITEM * (arr.length - 1);
+            const start = performance.now();
+            function step(now){
+              const p = Math.min((now - start) / duration, 1);
+              const e = 1 - Math.pow(1 - p, 3);
+              strip.style.transform = 'translateY(' + (-e * total) + 'px)';
+              if(p < 1) requestAnimationFrame(step);
+              else{
+                strip.classList.remove('moving');
+                res();
+              }
+            }
+            requestAnimationFrame(step);
+          }, delay);
+        });
+      }
+      const arr1 = Array.from({ length: 26 }, pick);
+      const arr2 = Array.from({ length: 26 }, pick);
+      const arr3 = Array.from({ length: 26 }, pick);
+      arr3.push(finalName);
+      Promise.all([
+        spin(stripEls[0], arr1, 0,   1500),
+        spin(stripEls[1], arr2, 220, 1750),
+        spin(stripEls[2], arr3, 440, 2000),
+      ]).then(()=>{
+        setTimeout(resolve, 650);
+      });
     });
   }
 
@@ -724,7 +748,7 @@
         groupStatusMsg.textContent = 'Semua grup sudah diundi.';
         return;
       }
-      await playGroupRoll(data.name);
+      await playSlotRoll(data.name);
       const no = noForGroup(data.name) || data.order;
       showGroupResult(Object.assign({}, data, { order: no }));
       addGroupHistory(Object.assign({}, data, { order: no }));

@@ -690,23 +690,49 @@
     text-transform:uppercase;
     margin-bottom:12px;
   }
-  .group-result .grp-rolling{
-    font-size:clamp(24px, 6vw, 38px);
-    font-weight:800;
-    color:var(--gold);
-    min-height:1.3em;
+  .slot-machine{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    width:min(92vw, 420px);
     max-width:100%;
+    margin:0 auto;
+    padding:14px;
+    background:#07191b;
+    border:2px solid var(--gold-dim);
+    border-radius:14px;
+    box-shadow: inset 0 8px 24px rgba(0,0,0,.5), 0 0 0 4px rgba(232,181,77,.12);
+  }
+  .slot-reel{
+    flex:1;
+    max-width:170px;
+    height:54px;
     overflow:hidden;
+    background:#06181a;
+    border:1px solid var(--panel-edge);
+    border-radius:8px;
+    position:relative;
+  }
+  .slot-reel::after{
+    content:'';
+    position:absolute; inset:0;
+    pointer-events:none;
+    background:linear-gradient(180deg, rgba(6,24,26,0.9) 0%, transparent 22%, transparent 78%, rgba(6,24,26,0.9) 100%);
+  }
+  .slot-strip{ will-change:transform; }
+  .slot-strip.moving{ filter:blur(2px); }
+  .slot-item{
+    height:54px;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:800;
+    font-size:15px;
+    color:var(--gold);
     text-overflow:ellipsis;
+    overflow:hidden;
     white-space:nowrap;
+    padding:0 6px;
   }
-  .group-result .grp-rolling.flip{
-    animation:rollflip 0.12s ease-out;
-  }
-  @keyframes rollflip{
-    from{ transform:translateY(-55%); opacity:0; filter:blur(2px); }
-    to{ transform:translateY(0); opacity:1; filter:blur(0); }
-  }
+  .grp-rolling-hint:empty{ display:none; }
   .group-result.show{ display:block; }
   .group-result .grp-name{
     font-size:clamp(22px,5vw,30px);
