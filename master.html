@@ -43,6 +43,12 @@
       <div class="admin-section">
         <h4>Status Undian Grup (Mode 2)</h4>
         <p class="small-note">Input di bawah hanya tersimpan sebagai data admin dan <b>tidak muncul di halaman utama</b>. Saat anda mengetik nama grup yang sama di halaman utama lalu mengocok, nomor urut yang keluar otomatis mengikuti <b>NO</b> yang diatur di sini (vlookup). Edit langsung, tambah/hapus baris, lalu Simpan.</p>
+        <div class="import-box">
+          <h4 style="font-size:13px;margin-bottom:6px;">Impor Dari Excel (Input Massal)</h4>
+          <p class="small-note">Copy sel dari Excel lalu tempel di kotak bawah. Kolom pertama = <b>NO</b>, kolom kedua = <b>NAMA GRUP</b> (pisah kolom pakai tab / koma / titik-koma; tiap baris = satu grup). Baris header seperti "NO / NAMA GRUP" otomatis dilewati.</p>
+          <textarea class="imp-tarea" id="noMapImport" placeholder="Tempel dari Excel di sini...&#10;1&#9;NAMA GRUP 1&#10;2&#9;NAMA GRUP 2"></textarea>
+          <button class="btn-primary" id="importNoMapBtn" style="margin-top:8px;">Impor &amp; Simpan (Timpa Daftar)</button>
+        </div>
         <table class="no-map" id="noMapTable">
           <thead>
             <tr><th>NO</th><th>NAMA GRUP</th><th></th></tr>

@@ -751,6 +751,21 @@
     color:var(--gold);
     margin-bottom:14px;
   }
+  .import-box{
+    background:var(--panel);
+    border:1px solid var(--panel-edge);
+    border-radius:12px;
+    padding:12px;
+    margin-bottom:12px;
+  }
+  .imp-tarea{
+    width:100%;
+    min-height:96px;
+    resize:vertical;
+    font-family:ui-monospace, Consolas, monospace;
+    font-size:12px;
+    line-height:1.5;
+  }
   .grp-setby{
     font-size:10px;
     letter-spacing:0.08em;

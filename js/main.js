@@ -89,6 +89,8 @@
   const noMapBody = document.getElementById('noMapBody');
   const addNoMapRowBtn = document.getElementById('addNoMapRowBtn');
   const saveNoMapBtn = document.getElementById('saveNoMapBtn');
+  const importNoMapBtn = document.getElementById('importNoMapBtn');
+  const noMapImport = document.getElementById('noMapImport');
   const confirmOverlay = document.getElementById('confirmOverlay');
   const confirmTitle = document.getElementById('confirmTitle');
   const confirmMsg = document.getElementById('confirmMsg');
@@ -602,6 +604,48 @@
       return { no: isFinite(no) ? no : null, name };
     }).filter(r=>r.name);
   }
+  function parseNoToken(s){
+    let t = String(s).replace(/[^0-9.,]/g, '');
+    if(/[,.]\d{1,2}\s*$/.test(t)){
+      t = t.replace(/[.,]\d{1,2}\s*$/, '');
+    }
+    const n = parseInt(t.replace(/[,.]/g, ''), 10);
+    return isFinite(n) ? n : null;
+  }
+  function parseNoMapImport(text){
+    const tabMode = text.includes('\t');
+    const sep = tabMode ? /\t+/ : (text.includes(';') ? /;+/ : /[\t,]+/);
+    const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+    const rows = [];
+    lines.forEach((line)=>{
+      const cols = line.split(sep).map(c=>c.trim()).filter(Boolean);
+      if(!cols.length) return;
+      if(/^(no|nomor|urutan)(\s*$|\s)/i.test(cols[0]) && cols.length >= 2 && /^nama/i.test(cols[1])) return;
+      if(cols.length === 1 && /^(nama|nama grup|grup)$/i.test(cols[0])) return;
+      let no = null;
+      let name = '';
+      if(cols.length >= 2){
+        no = parseNoToken(cols[0]);
+        name = cols[1];
+      }else{
+        name = cols[0];
+      }
+      if(name){
+        const dupe = rows.some(r=>String(r.name).toLowerCase() === name.toLowerCase());
+        if(!dupe) rows.push({ no, name });
+      }
+    });
+    const used = new Set(rows.map(r=>r.no).filter(n=>n != null));
+    let cursor = 1;
+    rows.forEach(r=>{
+      if(r.no == null){
+        while(used.has(cursor)) cursor++;
+        r.no = cursor;
+        used.add(cursor);
+      }
+    });
+    return rows;
+  }
   if(adminOverlay){
     addNoMapRowBtn.addEventListener('click', addNoMapRow);
     saveNoMapBtn.addEventListener('click', async ()=>{
@@ -621,6 +665,30 @@
         saveNoMapBtn.disabled = false;
       }
     });
+    if(importNoMapBtn && noMapImport){
+      importNoMapBtn.addEventListener('click', async ()=>{
+        const rows = parseNoMapImport(noMapImport.value);
+        if(!rows.length){
+          alert('Tidak ada data valid — pastikan kolom pertama NO dan kolom kedua NAMA GRUP.');
+          return;
+        }
+        importNoMapBtn.disabled = true;
+        try{
+          const { error } = await supabase.rpc('save_group_no_map', { rows });
+          if (error) throw new Error(error.message);
+          await loadNoMap();
+          renderNoMap();
+          renderGroupHistory();
+          groupStatusMsg.textContent = `Impor selesai: ${m2.noMap.length} entri tersimpan.`;
+          noMapImport.value = '';
+        }catch(e){
+          console.error(e);
+          alert('Gagal impor: ' + e.message);
+        }finally{
+          importNoMapBtn.disabled = false;
+        }
+      });
+    }
   }
 
   function saveGroupsFlow(srcBtn, srcInput, msg){
