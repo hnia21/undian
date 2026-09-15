@@ -676,6 +676,38 @@
       });
   }
 
+  function rollNames(pool, n){
+    const out = [];
+    const src = pool.slice();
+    while(out.length < n){
+      if(!src.length) src.push(...pool);
+      const i = Math.floor(Math.random() * src.length);
+      out.push(src.splice(i, 1)[0]);
+    }
+    return out;
+  }
+  function playGroupRoll(finalName){
+    return new Promise(resolve=>{
+      const pool = (m2.groups.length ? m2.groups.map(g=>g.name) : []).filter(Boolean);
+      const names = rollNames(pool.length ? pool : [finalName], 18).concat([finalName]);
+      groupResult.classList.add('show');
+      groupResult.innerHTML =
+        '<div class="grp-rolling-hint">Mengocok undian grup...</div><div class="grp-rolling"></div>';
+      const el = groupResult.querySelector('.grp-rolling');
+      let i = 0;
+      const tick = ()=>{
+        el.textContent = names[i];
+        el.classList.remove('flip');
+        void el.offsetWidth;
+        el.classList.add('flip');
+        i++;
+        if(i < names.length) setTimeout(tick, 90 + Math.min(i * 24, 130));
+        else resolve();
+      };
+      tick();
+    });
+  }
+
   drawGroupBtn.addEventListener('click', async ()=>{
     if(drawingGroup) return;
     drawingGroup = true;
@@ -692,6 +724,7 @@
         groupStatusMsg.textContent = 'Semua grup sudah diundi.';
         return;
       }
+      await playGroupRoll(data.name);
       const no = noForGroup(data.name) || data.order;
       showGroupResult(Object.assign({}, data, { order: no }));
       addGroupHistory(Object.assign({}, data, { order: no }));
