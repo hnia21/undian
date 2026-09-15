@@ -71,9 +71,6 @@
   const mode1Tab = document.getElementById('mode1Tab');
   const mode2Tab = document.getElementById('mode2Tab');
 
-  const adminGroupInput = document.getElementById('adminGroupInput');
-  const adminSaveGroupsBtn = document.getElementById('adminSaveGroupsBtn');
-  const adminGroupChips = document.getElementById('adminGroupChips');
   const groupInput = document.getElementById('groupInput');
   const saveGroupsBtn = document.getElementById('saveGroupsBtn');
   const groupChips = document.getElementById('groupChips');
@@ -105,7 +102,6 @@
     statusMsg.textContent = 'Konfigurasi Supabase belum lengkap. Isi js/config.js terlebih dahulu.';
     drawBtn.disabled = true;
     applyMaxBtn.disabled = true;
-    adminSaveGroupsBtn.disabled = true;
     saveGroupsBtn.disabled = true;
     drawGroupBtn.disabled = true;
     console.error('Supabase tidak terkonfigurasi: isi SUPABASE_URL dan SUPABASE_ANON_KEY di js/config.js');
@@ -512,8 +508,6 @@
     renderGroupChips();
     renderGroupHistory();
     renderGroupsAdmin();
-    if(adminGroupChips) renderGroupChips(adminGroupChips);
-    if(adminGroupInput) adminGroupInput.value = '';
   }
 
   function saveGroupsFlow(srcBtn, srcInput, msg){
@@ -593,7 +587,6 @@
       renderGroupChips();
       renderGroupHistory();
       renderGroupsAdmin();
-      if(adminGroupChips) renderGroupChips(adminGroupChips);
       confettiBurst();
       groupStatusMsg.textContent = '';
     }catch(e){
@@ -645,7 +638,6 @@
       await loadGroups();
       renderGroupsAdmin();
       renderGroupChips();
-      if(adminGroupChips) renderGroupChips(adminGroupChips);
       renderGroupHistory();
       groupResult.classList.remove('show');
       groupStatusMsg.textContent = 'Undian grup direset.';
@@ -688,17 +680,6 @@
   }
 
   // ---------- ADMIN MODE 2 ----------
-  if(adminOverlay){
-    adminSaveGroupsBtn.addEventListener('click', ()=>{
-      saveGroupsFlow(adminSaveGroupsBtn, adminGroupInput, 'Simpan Grup (Admin)')
-        .then(()=> alert(`Tersimpan ${m2.groups.length} grup.`))
-        .catch(e=>{
-          console.error(e);
-          alert('Gagal menyimpan grup: ' + e.message);
-        });
-    });
-  }
-
   function renderGroupsAdmin(){
     if(!groupsAdmin) return;
     groupsAdmin.innerHTML = '';
@@ -752,7 +733,6 @@
     renderGroupChips();
     renderGroupHistory();
     renderGroupsAdmin();
-    if(adminGroupChips) renderGroupChips(adminGroupChips);
   }catch(e){
     console.warn('Data Mode 2 tidak dapat dimuat:', e.message);
     groupStatusMsg.textContent = 'Mode 2 butuh supabase-m2.sql (jalankan di SQL Editor).';
