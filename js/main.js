@@ -577,11 +577,13 @@
     no.type = 'number';
     no.min = '1';
     no.value = '';
+    no.className = 'noMapNo';
     tdNo.appendChild(no);
     const tdName = document.createElement('td');
     const name = document.createElement('input');
     name.type = 'text';
     name.placeholder = 'Nama grup';
+    name.className = 'noMapName';
     tdName.appendChild(name);
     const tdDel = document.createElement('td');
     tdDel.className = 'del';
