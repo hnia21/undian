@@ -71,13 +71,14 @@
   const mode1Tab = document.getElementById('mode1Tab');
   const mode2Tab = document.getElementById('mode2Tab');
 
-  const adminParticipantInput = document.getElementById('adminParticipantInput');
-  const adminSaveParticipantsBtn = document.getElementById('adminSaveParticipantsBtn');
-  const adminParticipantChips = document.getElementById('adminParticipantChips');
+  const adminGroupInput = document.getElementById('adminGroupInput');
+  const adminSaveGroupsBtn = document.getElementById('adminSaveGroupsBtn');
+  const adminGroupChips = document.getElementById('adminGroupChips');
   const groupInput = document.getElementById('groupInput');
   const saveGroupsBtn = document.getElementById('saveGroupsBtn');
   const groupChips = document.getElementById('groupChips');
   const drawGroupBtn = document.getElementById('drawGroupBtn');
+  const resetGroupDrawMainBtn = document.getElementById('resetGroupDrawMainBtn');
   const groupStatusMsg = document.getElementById('groupStatusMsg');
   const groupResult = document.getElementById('groupResult');
   const groupHistory = document.getElementById('groupHistory');
@@ -87,12 +88,10 @@
 
   let spinning = false;
   let drawingGroup = false;
-  let shuffleOrdinal = 0;
 
   // ---------- MODE 2 STATE ----------
   const m2 = {
-    participants: [], // [{id, name}]
-    groups: [],       // [{id, name, drawn, memberIds, members}]
+    groups: [],       // [{id, name, drawn, order_seq}]
   };
 
   // ---------- CONFIG CHECK ----------
@@ -100,7 +99,7 @@
     statusMsg.textContent = 'Konfigurasi Supabase belum lengkap. Isi js/config.js terlebih dahulu.';
     drawBtn.disabled = true;
     applyMaxBtn.disabled = true;
-    adminSaveParticipantsBtn.disabled = true;
+    adminSaveGroupsBtn.disabled = true;
     saveGroupsBtn.disabled = true;
     drawGroupBtn.disabled = true;
     console.error('Supabase tidak terkonfigurasi: isi SUPABASE_URL dan SUPABASE_ANON_KEY di js/config.js');
@@ -333,13 +332,13 @@
   async function openAdmin(){
     if(!adminOverlay) return;
     try{
-      await Promise.all([loadParticipants(), loadGroups()]);
+      await loadGroups();
+      refreshGroupViews();
     }catch(e){
       console.warn('Data Mode 2 gagal dimuat ulang:', e.message);
     }
     renderAdminPool();
     renderAdminQueue();
-    renderAdminParticipantChips();
     renderGroupsAdmin();
     adminOverlay.classList.add('show');
   }
@@ -475,57 +474,50 @@
     }[c]));
   }
 
-  async function loadParticipants(){
-    const { data, error } = await supabase.rpc('get_participants');
-    if (error) throw new Error(error.message);
-    m2.participants = data;
-  }
   async function loadGroups(){
     const { data, error } = await supabase.rpc('get_groups');
     if (error) throw new Error(error.message);
     m2.groups = data;
   }
 
-  function renderAdminParticipantChips(){
-    if(!adminParticipantChips) return;
-    adminParticipantChips.innerHTML = '';
-    m2.participants.forEach(p=>{
-      const s = document.createElement('span');
-      s.className = 'chip';
-      s.textContent = p.name;
-      adminParticipantChips.appendChild(s);
-    });
-  }
-  function renderGroupChips(){
-    groupChips.innerHTML = '';
+  function renderGroupChips(el){
+    const target = el || groupChips;
+    target.innerHTML = '';
     m2.groups.forEach(g=>{
       const s = document.createElement('span');
       s.className = 'chip';
       s.textContent = g.name + (g.drawn ? ' ✓' : '');
-      groupChips.appendChild(s);
+      target.appendChild(s);
     });
   }
+  function refreshGroupViews(){
+    renderGroupChips();
+    renderGroupHistory();
+    renderGroupsAdmin();
+    if(adminGroupChips) renderGroupChips(adminGroupChips);
+    if(adminGroupInput) adminGroupInput.value = '';
+  }
 
-  saveGroupsBtn.addEventListener('click', async ()=>{
-    const names = groupInput.value.split('\n').map(s=>s.trim()).filter(Boolean);
-    if(!names.length) return;
-    saveGroupsBtn.disabled = true;
-    try{
-      const { error } = await supabase.rpc('save_groups', { names });
-      if (error) throw new Error(error.message);
-      groupInput.value = '';
-      await loadParticipants();
-      await loadGroups();
-      renderGroupChips();
-      renderGroupHistory();
-      renderGroupsAdmin();
-      groupStatusMsg.textContent = `Tersimpan ${m2.groups.length} grup.`;
-    }catch(e){
-      console.error(e);
-      alert('Gagal menyimpan grup: ' + e.message);
-    }finally{
-      saveGroupsBtn.disabled = false;
-    }
+  function saveGroupsFlow(srcBtn, srcInput, msg){
+    const names = srcInput.value.split('\n').map(s=>s.trim()).filter(Boolean);
+    if(!names.length) return Promise.resolve();
+    srcBtn.disabled = true;
+    return supabase.rpc('save_groups', { names })
+      .then(async ({ error })=>{
+        if (error) throw new Error(error.message);
+        await loadGroups();
+        refreshGroupViews();
+        groupStatusMsg.textContent = msg + ` — tersimpan ${m2.groups.length} grup.`;
+      })
+      .finally(()=>{ srcBtn.disabled = false; });
+  }
+
+  saveGroupsBtn.addEventListener('click', ()=>{
+    saveGroupsFlow(saveGroupsBtn, groupInput, 'Simpan Grup')
+      .catch(e=>{
+        console.error(e);
+        alert('Gagal menyimpan grup: ' + e.message);
+      });
   });
 
   function showGroupResult(g){
@@ -541,27 +533,13 @@
     nameEl.className = 'grp-name';
     nameEl.textContent = g.name;
     groupResult.appendChild(nameEl);
-    const ul = document.createElement('ul');
-    if(g.members && g.members.length){
-      g.members.forEach(m=>{
-        const li = document.createElement('li');
-        li.textContent = m;
-        ul.appendChild(li);
-      });
-    }else{
-      const li = document.createElement('li');
-      li.className = 'empty-note';
-      li.textContent = 'Belum ada peserta di grup ini.';
-      ul.appendChild(li);
-    }
-    groupResult.appendChild(ul);
   }
 
   function addGroupHistory(g){
     const row = document.createElement('div');
     row.className = 'hist-group';
     const orderHtml = g.order ? `<div class="hg-order">Undian ke-${g.order}</div>` : '';
-    row.innerHTML = `${orderHtml}<div class="hg-name">${esc(g.name)}</div><div class="hg-members">${(g.members || []).map(esc).join(' · ') || '—'}</div>`;
+    row.innerHTML = `${orderHtml}<div class="hg-name">${esc(g.name)}</div>`;
     groupHistory.prepend(row);
   }
   function renderGroupHistory(){
@@ -582,30 +560,23 @@
     groupStatusMsg.textContent = 'Mengocok...';
     try{
       if(m2.groups.length === 0){
-        // belum ada grup -> acak seluruh daftar peserta
-        if(m2.participants.length === 0){
-          groupStatusMsg.textContent = 'Belum ada peserta maupun grup.';
-          return;
-        }
-        const shuffled = m2.participants.slice().sort(()=>Math.random()-0.5);
-        const members = shuffled.map(p=>p.name);
-        shuffleOrdinal++;
-        showGroupResult({ name: 'Hasil Acak (Tanpa Grup)', members, order: shuffleOrdinal });
-      }else{
-        const { data, error } = await supabase.rpc('draw_group');
-        if (error) throw new Error(error.message);
-        if(data.done){
-          groupStatusMsg.textContent = 'Semua grup sudah diundi.';
-          return;
-        }
-        showGroupResult(data);
-        addGroupHistory(data);
-        await loadGroups();
-        renderGroupChips();
-        renderGroupHistory();
-        renderGroupsAdmin();
-        confettiBurst();
+        groupStatusMsg.textContent = 'Belum ada grup — input nama grup dulu.';
+        return;
       }
+      const { data, error } = await supabase.rpc('draw_group');
+      if (error) throw new Error(error.message);
+      if(data.done){
+        groupStatusMsg.textContent = 'Semua grup sudah diundi.';
+        return;
+      }
+      showGroupResult(data);
+      addGroupHistory(data);
+      await loadGroups();
+      renderGroupChips();
+      renderGroupHistory();
+      renderGroupsAdmin();
+      if(adminGroupChips) renderGroupChips(adminGroupChips);
+      confettiBurst();
       groupStatusMsg.textContent = '';
     }catch(e){
       console.error(e);
@@ -616,141 +587,79 @@
     }
   });
 
+  async function resetGroupDraw(srcBtn){
+    if(!confirm('Reset undian grup? Semua grup kembali belum diundi dan nomor urut dihapus.')) return;
+    if(srcBtn) srcBtn.disabled = true;
+    try{
+      const { error } = await supabase.rpc('reset_group_draw');
+      if (error) throw new Error(error.message);
+      await loadGroups();
+      renderGroupsAdmin();
+      renderGroupChips();
+      if(adminGroupChips) renderGroupChips(adminGroupChips);
+      renderGroupHistory();
+      groupResult.classList.remove('show');
+      groupStatusMsg.textContent = 'Undian grup direset.';
+    }catch(e){
+      console.error(e);
+      alert('Gagal reset undian grup: ' + e.message);
+    }finally{
+      if(srcBtn) srcBtn.disabled = false;
+    }
+  }
+  if(resetGroupDrawMainBtn){
+    resetGroupDrawMainBtn.addEventListener('click', ()=>resetGroupDraw(resetGroupDrawMainBtn));
+  }
+
   // ---------- ADMIN MODE 2 ----------
   if(adminOverlay){
-    adminSaveParticipantsBtn.addEventListener('click', async ()=>{
-      const names = adminParticipantInput.value.split('\n').map(s=>s.trim()).filter(Boolean);
-      if(!names.length) return;
-      adminSaveParticipantsBtn.disabled = true;
-      try{
-        const { error } = await supabase.rpc('save_participants', { names });
-        if (error) throw new Error(error.message);
-        adminParticipantInput.value = '';
-        await loadParticipants();
-        await loadGroups();
-        renderAdminParticipantChips();
-        renderGroupChips();
-        renderGroupHistory();
-        renderGroupsAdmin();
-        groupStatusMsg.textContent = `Tersimpan ${m2.participants.length} peserta (Mode 2).`;
-      }catch(e){
-        console.error(e);
-        alert('Gagal menyimpan peserta: ' + e.message);
-      }finally{
-        adminSaveParticipantsBtn.disabled = false;
-      }
+    adminSaveGroupsBtn.addEventListener('click', ()=>{
+      saveGroupsFlow(adminSaveGroupsBtn, adminGroupInput, 'Simpan Grup (Admin)')
+        .then(()=> alert(`Tersimpan ${m2.groups.length} grup.`))
+        .catch(e=>{
+          console.error(e);
+          alert('Gagal menyimpan grup: ' + e.message);
+        });
     });
   }
 
   function renderGroupsAdmin(){
     if(!groupsAdmin) return;
     groupsAdmin.innerHTML = '';
-    if(!m2.groups.length || !m2.participants.length){
+    if(!m2.groups.length){
       const p = document.createElement('p');
       p.className = 'ga-empty';
-      p.textContent = !m2.groups.length
-        ? 'Belum ada grup — input di Mode 2 → "Nama Grup".'
-        : 'Belum ada peserta — input di Panel Admin → "Daftar Peserta".';
+      p.textContent = 'Belum ada grup — input di "Nama Grup".';
       groupsAdmin.appendChild(p);
       return;
     }
     m2.groups.forEach(g=>{
       const box = document.createElement('div');
       box.className = 'group-admin';
-
       const head = document.createElement('div');
       head.className = 'ga-head';
       const b = document.createElement('b');
       b.textContent = g.name;
       const st = document.createElement('span');
-      st.textContent = (g.drawn ? 'sudah diundi' : 'belum diundi') + ((g.memberIds || []).length ? ` · ${g.memberIds.length} peserta` : '');
+      st.textContent = g.drawn ? `diundi ke-${g.order_seq || '?'}` : 'belum diundi';
       head.append(b, st);
       box.appendChild(head);
-
-      if(g.drawn){
-        const p = document.createElement('p');
-        p.className = 'ga-empty';
-        p.textContent = 'Sudah diundi — reset undian grup untuk mengubah susunannya.';
-        box.appendChild(p);
-      }else{
-        const selected = new Set(g.memberIds || []);
-        const members = document.createElement('div');
-        members.className = 'ga-members';
-        m2.participants.forEach(p=>{
-          const lab = document.createElement('label');
-          const cb = document.createElement('input');
-          cb.type = 'checkbox';
-          cb.value = p.id;
-          cb.checked = selected.has(p.id);
-          lab.appendChild(cb);
-          lab.appendChild(document.createTextNode(p.name));
-          members.appendChild(lab);
-        });
-        box.appendChild(members);
-
-        const row = document.createElement('div');
-        row.className = 'row';
-        row.style.marginTop = '10px';
-        const btn = document.createElement('button');
-        btn.className = 'btn-primary';
-        btn.textContent = 'Simpan Peserta Grup';
-        btn.addEventListener('click', async ()=>{
-          const ids = [...members.querySelectorAll('input:checked')].map(i=>parseInt(i.value, 10));
-          btn.disabled = true;
-          try{
-            const { error } = await supabase.rpc('set_group_participants', { p_group_id: g.id, p_participant_ids: ids });
-            if (error) throw new Error(error.message);
-            await loadGroups();
-            renderGroupsAdmin();
-            renderGroupChips();
-            alert(`Peserta grup "${g.name}" disimpan (${ids.length} orang).`);
-          }catch(e){
-            console.error(e);
-            alert('Gagal menyimpan pengaturan grup: ' + e.message);
-            btn.disabled = false;
-          }
-        });
-        row.appendChild(btn);
-        box.appendChild(row);
-      }
       groupsAdmin.appendChild(box);
     });
   }
 
   if(adminOverlay){
-    resetGroupDrawBtn.addEventListener('click', async ()=>{
-      if(!confirm('Reset undian grup? Semua anggota hasil undian dihapus dan semua grup kembali belum diundi.')) return;
-      resetGroupDrawBtn.disabled = true;
-      try{
-        const { error } = await supabase.rpc('reset_group_draw');
-        if (error) throw new Error(error.message);
-        await loadGroups();
-        renderGroupsAdmin();
-        renderGroupChips();
-        renderGroupHistory();
-        groupResult.classList.remove('show');
-        groupStatusMsg.textContent = 'Undian grup direset.';
-      }catch(e){
-        console.error(e);
-        alert('Gagal reset undian grup: ' + e.message);
-      }finally{
-        resetGroupDrawBtn.disabled = false;
-      }
-    });
+    resetGroupDrawBtn.addEventListener('click', ()=>resetGroupDraw(resetGroupDrawBtn));
 
     clearGroupDataBtn.addEventListener('click', async ()=>{
-      if(!confirm('Hapus semua data Mode 2 (peserta, grup, anggota)?')) return;
+      if(!confirm('Hapus semua data Mode 2 (daftar grup)?')) return;
       clearGroupDataBtn.disabled = true;
       try{
         const { error } = await supabase.rpc('clear_group_data');
         if (error) throw new Error(error.message);
-        m2.participants = [];
         m2.groups = [];
-        shuffleOrdinal = 0;
-        renderAdminParticipantChips();
-        renderGroupChips();
+        refreshGroupViews();
         renderGroupHistory();
-        renderGroupsAdmin();
         groupResult.classList.remove('show');
         groupStatusMsg.textContent = 'Data Mode 2 dihapus.';
       }catch(e){
@@ -780,10 +689,11 @@
 
   // mode 2 (best-effort; tidak mengganggu mode 1 jika sekema belum ada)
   try{
-    await Promise.all([loadParticipants(), loadGroups()]);
-    renderAdminParticipantChips();
+    await loadGroups();
     renderGroupChips();
     renderGroupHistory();
+    renderGroupsAdmin();
+    if(adminGroupChips) renderGroupChips(adminGroupChips);
   }catch(e){
     console.warn('Data Mode 2 tidak dapat dimuat:', e.message);
     groupStatusMsg.textContent = 'Mode 2 butuh supabase-m2.sql (jalankan di SQL Editor).';
