@@ -685,4 +685,28 @@
     cursor:pointer;
   }
   .group-admin label input{ accent-color:var(--gold); }
+
+  /* ---- ADMIN: atur hasil undian grup ---- */
+  #groupsAdminForce{
+    display:flex; flex-direction:column; gap:6px;
+    margin-top:4px;
+  }
+  #groupsAdminForce .ga-force{
+    display:flex; align-items:center; gap:8px;
+    font-size:13px;
+    color:var(--muted);
+    background:rgba(159,192,188,0.06);
+    border:1px solid var(--panel-edge);
+    border-radius:8px;
+    padding:8px 10px;
+    cursor:pointer;
+    transition: background .12s ease, border-color .12s ease, color .12s ease;
+  }
+  #groupsAdminForce .ga-force:hover{ color:var(--cream); }
+  #groupsAdminForce .ga-force:has(input:checked){
+    color:var(--cream);
+    border-color:rgba(232,181,77,0.5);
+    background:rgba(232,181,77,0.08);
+  }
+  #groupsAdminForce .ga-force input{ accent-color:var(--gold); }
   .group-admin .ga-empty{ color:var(--muted); font-size:12px; }

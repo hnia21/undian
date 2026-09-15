@@ -16,11 +16,13 @@ create table if not exists public.groups (
   id   bigint generated always as identity primary key,
   name text not null,
   drawn boolean not null default false,
-  order_seq int
+  order_seq int,
+  forced boolean not null default false
 );
 
 -- idempotent: tambahkan kolom jika tabel sudah ada dari versi sebelumnya
 alter table public.groups add column if not exists order_seq int;
+alter table public.groups add column if not exists forced   boolean not null default false;
 
 alter table public.groups enable row level security;
 
@@ -54,9 +56,26 @@ as $$
       'id',       id,
       'name',     name,
       'drawn',    drawn,
-      'order_seq', order_seq
+      'order_seq', order_seq,
+      'forced',   forced
     ) order by id), '[]'::jsonb)
   from public.groups;
+$$;
+
+-- Admin: tentukan urutan undian berikutnya. Hanya grup yang belum
+-- diundi yang dijamin. Mengosongkan antrian mengembalikan ke acak.
+create or replace function public.set_groups_forced(p_group_ids bigint[])
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update public.groups set forced = false where true;
+  update public.groups set forced = true
+  where id = any(p_group_ids)
+    and not drawn;
+end;
 $$;
 
 -- Undi satu grup berikutnya secara acak dari yang belum diundi.
@@ -73,7 +92,7 @@ begin
   select * into g
   from public.groups
   where not drawn
-  order by random()
+  order by forced desc, id
   limit 1;
 
   if g.id is null then
@@ -102,7 +121,7 @@ security definer
 set search_path = public
 as $$
 begin
-  update public.groups set drawn = false, order_seq = null where true;
+  update public.groups set drawn = false, order_seq = null, forced = false where true;
 end;
 $$;
 

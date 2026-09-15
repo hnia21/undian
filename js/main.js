@@ -81,6 +81,8 @@
   const groupResult = document.getElementById('groupResult');
   const groupHistory = document.getElementById('groupHistory');
   const groupsAdmin = document.getElementById('groupsAdmin');
+  const groupsAdminForce = document.getElementById('groupsAdminForce');
+  const saveGroupsForceBtn = document.getElementById('saveGroupsForceBtn');
   const resetGroupDrawBtn = document.getElementById('resetGroupDrawBtn');
   const clearGroupDataBtn = document.getElementById('clearGroupDataBtn');
   const confirmOverlay = document.getElementById('confirmOverlay');
@@ -353,6 +355,7 @@
     }
     renderAdminPool();
     renderAdminQueue();
+    renderGroupsAdminForce();
     renderGroupsAdmin();
     adminOverlay.classList.add('show');
   }
@@ -508,6 +511,7 @@
     renderGroupChips();
     renderGroupHistory();
     renderGroupsAdmin();
+    renderGroupsAdminForce();
   }
 
   function saveGroupsFlow(srcBtn, srcInput, msg){
@@ -584,9 +588,7 @@
       showGroupResult(data);
       addGroupHistory(data);
       await loadGroups();
-      renderGroupChips();
-      renderGroupHistory();
-      renderGroupsAdmin();
+      refreshGroupViews();
       confettiBurst();
       groupStatusMsg.textContent = '';
     }catch(e){
@@ -680,6 +682,52 @@
   }
 
   // ---------- ADMIN MODE 2 ----------
+  function renderGroupsAdminForce(){
+    if(!groupsAdminForce) return;
+    groupsAdminForce.innerHTML = '';
+    const undrawn = m2.groups.filter(g=>!g.drawn);
+    if(!undrawn.length){
+      const p = document.createElement('p');
+      p.className = 'ga-empty';
+      p.textContent = 'Semua grup sudah diundi.';
+      groupsAdminForce.appendChild(p);
+      return;
+    }
+    undrawn.forEach(g=>{
+      const lab = document.createElement('label');
+      lab.className = 'ga-force';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.value = g.id;
+      cb.checked = !!g.forced;
+      lab.appendChild(cb);
+      lab.appendChild(document.createTextNode(g.name + (g.forced ? ' · antrian' : '')));
+      groupsAdminForce.appendChild(lab);
+    });
+  }
+
+  if(adminOverlay){
+    saveGroupsForceBtn.addEventListener('click', async ()=>{
+      saveGroupsForceBtn.disabled = true;
+      try{
+        const ids = [...groupsAdminForce.querySelectorAll('input:checked')].map(i=>parseInt(i.value, 10));
+        const { error } = await supabase.rpc('set_groups_forced', { p_group_ids: ids });
+        if (error) throw new Error(error.message);
+        await loadGroups();
+        renderGroupsAdminForce();
+        renderGroupsAdmin();
+        groupStatusMsg.textContent = ids.length
+          ? `Antrian undian grup disimpan: ${ids.length} grup.`
+          : 'Mode acak murni (tanpa antrian).';
+      }catch(e){
+        console.error(e);
+        alert('Gagal menyimpan antrian grup: ' + e.message);
+      }finally{
+        saveGroupsForceBtn.disabled = false;
+      }
+    });
+  }
+
   function renderGroupsAdmin(){
     if(!groupsAdmin) return;
     groupsAdmin.innerHTML = '';
@@ -698,7 +746,9 @@
       const b = document.createElement('b');
       b.textContent = g.name;
       const st = document.createElement('span');
-      st.textContent = g.drawn ? `diundi ke-${g.order_seq || '?'}` : 'belum diundi';
+      st.textContent = g.drawn
+        ? `diundi ke-${g.order_seq || '?'}`
+        : (g.forced ? 'antrian berikutnya' : 'belum diundi');
       head.append(b, st);
       box.appendChild(head);
       groupsAdmin.appendChild(box);
