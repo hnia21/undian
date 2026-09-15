@@ -751,6 +751,13 @@
     color:var(--gold);
     margin-bottom:14px;
   }
+  .grp-setby{
+    font-size:10px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:6px;
+  }
   .grp-order{
     font-size:12px;
     letter-spacing:0.08em;

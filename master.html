@@ -41,8 +41,8 @@
       </div>
 
       <div class="admin-section">
-        <h4>Nomor Urut Grup (Mode 2)</h4>
-        <p class="small-note">Daftar ini tidak tampil di halaman utama. Saat sebuah grup diundi dan namanya sama dengan salah satu entri, nomor yang muncul diambil dari kolom NO di sini. Edit langsung, tambah/hapus baris, lalu Simpan.</p>
+        <h4>Status Undian Grup (Mode 2)</h4>
+        <p class="small-note">Input di bawah hanya tersimpan sebagai data admin dan <b>tidak muncul di halaman utama</b>. Saat anda mengetik nama grup yang sama di halaman utama lalu mengocok, nomor urut yang keluar otomatis mengikuti <b>NO</b> yang diatur di sini (vlookup). Edit langsung, tambah/hapus baris, lalu Simpan.</p>
         <table class="no-map" id="noMapTable">
           <thead>
             <tr><th>NO</th><th>NAMA GRUP</th><th></th></tr>
@@ -53,20 +53,14 @@
           <button class="btn-ghost" id="addNoMapRowBtn" style="flex:0 0 auto;">Tambah Baris</button>
           <button class="btn-primary" id="saveNoMapBtn" style="flex:1;">Simpan Nomor Urut</button>
         </div>
-      </div>
-
-      <div class="admin-section">
-        <h4>Atur Hasil Undian Grup (Mode 2)</h4>
-        <p class="small-note">Masukkan urutan undian berdasarkan <b>nomor urut grup</b> pada daftar di bawah, dipisahkan koma. Contoh: <span style="font-family:monospace">3, 1, 2</span> berarti urutan ke-3 diundi duluan. Kosongkan untuk kembali ke mode acak murni.</p>
+        <div style="margin-top:18px;border-top:1px solid var(--panel-edge);padding-top:14px;"></div>
+        <h4 style="font-size:13px;">Atur Hasil Undian Grup</h4>
+        <p class="small-note">Masukkan urutan undian berdasarkan <b>nomor urut grup</b> pada daftar di bawah, dipisahkan koma. Contoh: <span style="font-family:monospace">3, 1, 2</span>. Kosongkan untuk kembali ke mode acak murni.</p>
         <input type="text" id="groupsForceInput" placeholder="Contoh: 3, 1, 2">
         <button class="btn-primary" id="saveGroupsForceBtn" style="margin-top:8px;">Simpan Antrian Grup</button>
-      </div>
-
-      <div class="admin-section">
-        <h4>Status Undian Grup (Mode 2)</h4>
-        <p class="small-note">Grup yang sudah diundi tidak dapat diundi lagi sampai direset.</p>
+        <div style="margin-top:18px;border-top:1px solid var(--panel-edge);padding-top:14px;"></div>
         <div id="groupsAdmin"></div>
-        <div class="row" style="margin-top:10px;">
+        <div class="row">
           <button class="btn-danger" id="resetGroupDrawBtn" style="flex:1;">Reset Undian Grup</button>
           <button class="btn-ghost" id="clearGroupDataBtn" style="flex:1;">Hapus Semua Data Grup</button>
         </div>

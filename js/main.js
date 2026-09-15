@@ -643,7 +643,7 @@
       });
   });
 
-  function showGroupResult(g){
+  function showGroupResult(g, fromAdmin){
     groupResult.classList.add('show');
     groupResult.innerHTML = '';
     if(g.order){
@@ -651,6 +651,12 @@
       orderEl.className = 'grp-order';
       orderEl.textContent = 'Undian ke-' + g.order;
       groupResult.appendChild(orderEl);
+      if(fromAdmin){
+        const setBy = document.createElement('div');
+        setBy.className = 'grp-setby';
+        setBy.textContent = 'nomor urut sesuai seting admin';
+        groupResult.appendChild(setBy);
+      }
     }
     const nameEl = document.createElement('div');
     nameEl.className = 'grp-name';
@@ -741,8 +747,9 @@
         return;
       }
       await playSlotRoll(data.name);
-      const no = noForGroup(data.name) || data.order;
-      showGroupResult(Object.assign({}, data, { order: no }));
+      const adminNo = noForGroup(data.name);
+      const no = adminNo || data.order;
+      showGroupResult(Object.assign({}, data, { order: no }), !!adminNo);
       addGroupHistory(Object.assign({}, data, { order: no }));
       await loadGroups();
       refreshGroupViews();
@@ -895,7 +902,7 @@
     if(!m2.groups.length){
       const p = document.createElement('p');
       p.className = 'ga-empty';
-      p.textContent = 'Belum ada grup — input di "Nama Grup".';
+      p.textContent = 'Belum ada grup — input di "Nama Grup" halaman utama atau isi pre-konfigurasi NO di atas.';
       groupsAdmin.appendChild(p);
       return;
     }
