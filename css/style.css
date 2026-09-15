@@ -732,6 +732,17 @@
     white-space:nowrap;
     padding:0 6px;
   }
+  .slot-machine.single{
+    max-width:360px;
+  }
+  .slot-machine.single .slot-reel{
+    max-width:none;
+    height:70px;
+  }
+  .slot-machine.single .slot-item{
+    height:70px;
+    font-size:20px;
+  }
   .grp-rolling-hint:empty{ display:none; }
   .group-result.show{ display:block; }
   .group-result .grp-name{

@@ -684,13 +684,11 @@
       groupResult.classList.add('show');
       groupResult.innerHTML =
         '<div class="grp-rolling-hint">Mengocok undian grup...</div>' +
-        '<div class="slot-machine">' +
-          '<div class="slot-reel"><div class="slot-strip"></div></div>' +
-          '<div class="slot-reel"><div class="slot-strip"></div></div>' +
+        '<div class="slot-machine single">' +
           '<div class="slot-reel"><div class="slot-strip"></div></div>' +
         '</div>';
       const stripEls = [...groupResult.querySelectorAll('.slot-strip')];
-      const ITEM = 54;
+      const ITEM = 70;
       function spin(strip, arr, delay, duration){
         return new Promise(res=>{
           setTimeout(()=>{
@@ -718,15 +716,9 @@
           }, delay);
         });
       }
-      const arr1 = Array.from({ length: 26 }, pick);
-      const arr2 = Array.from({ length: 26 }, pick);
-      const arr3 = Array.from({ length: 26 }, pick);
-      arr3.push(finalName);
-      Promise.all([
-        spin(stripEls[0], arr1, 0,   1500),
-        spin(stripEls[1], arr2, 220, 1750),
-        spin(stripEls[2], arr3, 440, 2000),
-      ]).then(()=>{
+      const arr1 = Array.from({ length: 30 }, pick);
+      arr1.push(finalName);
+      Promise.all([spin(stripEls[0], arr1, 0, 2000)]).then(()=>{
         setTimeout(resolve, 650);
       });
     });
