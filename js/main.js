@@ -79,6 +79,7 @@
   const groupChips = document.getElementById('groupChips');
   const drawGroupBtn = document.getElementById('drawGroupBtn');
   const resetGroupDrawMainBtn = document.getElementById('resetGroupDrawMainBtn');
+  const clearGroupDataMainBtn = document.getElementById('clearGroupDataMainBtn');
   const groupStatusMsg = document.getElementById('groupStatusMsg');
   const groupResult = document.getElementById('groupResult');
   const groupHistory = document.getElementById('groupHistory');
@@ -611,6 +612,28 @@
     resetGroupDrawMainBtn.addEventListener('click', ()=>resetGroupDraw(resetGroupDrawMainBtn));
   }
 
+  async function clearGroupData(srcBtn){
+    if(!confirm('Hapus semua data Mode 2 (daftar grup)?')) return;
+    if(srcBtn) srcBtn.disabled = true;
+    try{
+      const { error } = await supabase.rpc('clear_group_data');
+      if (error) throw new Error(error.message);
+      m2.groups = [];
+      refreshGroupViews();
+      renderGroupHistory();
+      groupResult.classList.remove('show');
+      groupStatusMsg.textContent = 'Data Mode 2 dihapus.';
+    }catch(e){
+      console.error(e);
+      alert('Gagal menghapus data: ' + e.message);
+    }finally{
+      if(srcBtn) srcBtn.disabled = false;
+    }
+  }
+  if(clearGroupDataMainBtn){
+    clearGroupDataMainBtn.addEventListener('click', ()=>clearGroupData(clearGroupDataMainBtn));
+  }
+
   // ---------- ADMIN MODE 2 ----------
   if(adminOverlay){
     adminSaveGroupsBtn.addEventListener('click', ()=>{
@@ -651,24 +674,7 @@
   if(adminOverlay){
     resetGroupDrawBtn.addEventListener('click', ()=>resetGroupDraw(resetGroupDrawBtn));
 
-    clearGroupDataBtn.addEventListener('click', async ()=>{
-      if(!confirm('Hapus semua data Mode 2 (daftar grup)?')) return;
-      clearGroupDataBtn.disabled = true;
-      try{
-        const { error } = await supabase.rpc('clear_group_data');
-        if (error) throw new Error(error.message);
-        m2.groups = [];
-        refreshGroupViews();
-        renderGroupHistory();
-        groupResult.classList.remove('show');
-        groupStatusMsg.textContent = 'Data Mode 2 dihapus.';
-      }catch(e){
-        console.error(e);
-        alert('Gagal menghapus data: ' + e.message);
-      }finally{
-        clearGroupDataBtn.disabled = false;
-      }
-    });
+    clearGroupDataBtn.addEventListener('click', ()=>clearGroupData(clearGroupDataBtn));
   }
 
   // ---------- INIT ----------
