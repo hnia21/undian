@@ -161,7 +161,8 @@
   }
 
   #resetBtn{
-    margin-top:10px;
+    display:block;
+    margin:20px auto 0;
     background:transparent;
     border:1px solid var(--panel-edge);
     color:var(--muted);
