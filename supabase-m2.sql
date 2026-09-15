@@ -88,28 +88,28 @@ security definer
 set search_path = public
 as $$
 declare
-  g public.groups%rowtype;
+  r public.groups%rowtype;
 begin
-  select g.id, g.name into g
-  from public.groups g
+  select gg.id, gg.name into r
+  from public.groups gg
   left join public.group_no_map m
-    on lower(btrim(m.name)) = lower(btrim(g.name))
-  where not g.drawn
-  order by (m.no is null) asc, m.no asc, g.id asc
+    on lower(btrim(m.name)) = lower(btrim(gg.name))
+  where not gg.drawn
+  order by (m.no is null) asc, m.no asc, gg.id asc
   limit 1;
 
-  if g.id is null then
+  if r.id is null then
     return jsonb_build_object('done', true);
   end if;
 
   update public.groups
   set drawn = true,
       order_seq = (select coalesce(max(order_seq), 0) + 1 from public.groups where drawn)
-  where id = g.id;
+  where id = r.id;
 
   return jsonb_build_object(
-    'id',    g.id,
-    'name',  g.name,
+    'id',    r.id,
+    'name',  r.name,
     'done',  false,
     'order', (select coalesce(max(order_seq), 0) from public.groups where drawn)
   );
