@@ -77,6 +77,19 @@
     <p>Undian nomor urut grup</p>
   </footer>
 
+  <!-- Dialog konfirmasi (dipakai untuk reset/hapus data) -->
+  <div class="overlay" id="confirmOverlay">
+    <div class="modal confirm-modal" id="confirmModal">
+      <div class="confirm-icon" id="confirmIcon">!</div>
+      <h3 id="confirmTitle"></h3>
+      <p class="hint" id="confirmMsg"></p>
+      <div class="confirm-actions">
+        <button class="btn-ghost" id="confirmCancelBtn">Batal</button>
+        <button class="btn-danger" id="confirmOkBtn">Ya</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js"></script>
   <script src="js/main.js"></script>

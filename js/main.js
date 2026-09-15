@@ -86,6 +86,11 @@
   const groupsAdmin = document.getElementById('groupsAdmin');
   const resetGroupDrawBtn = document.getElementById('resetGroupDrawBtn');
   const clearGroupDataBtn = document.getElementById('clearGroupDataBtn');
+  const confirmOverlay = document.getElementById('confirmOverlay');
+  const confirmTitle = document.getElementById('confirmTitle');
+  const confirmMsg = document.getElementById('confirmMsg');
+  const confirmOkBtn = document.getElementById('confirmOkBtn');
+  const confirmCancelBtn = document.getElementById('confirmCancelBtn');
 
   let spinning = false;
   let drawingGroup = false;
@@ -588,9 +593,40 @@
     }
   });
 
+  function askConfirm(opts){
+    return new Promise(resolve=>{
+      confirmTitle.textContent = opts.title;
+      confirmMsg.textContent = opts.message;
+      confirmOkBtn.textContent = opts.okLabel || 'Ya';
+      function close(){
+        confirmOverlay.classList.remove('show');
+        confirmOverlay.removeEventListener('click', onBackdrop);
+        document.removeEventListener('keydown', onKey);
+      }
+      function onBackdrop(e){
+        if(e.target === confirmOverlay){ close(); resolve(false); }
+      }
+      function onKey(e){
+        if(e.key === 'Escape'){ close(); resolve(false); }
+        else if(e.key === 'Enter'){ close(); resolve(true); }
+      }
+      confirmOkBtn.onclick = ()=>{ close(); resolve(true); };
+      confirmCancelBtn.onclick = ()=>{ close(); resolve(false); };
+      confirmOverlay.addEventListener('click', onBackdrop);
+      document.addEventListener('keydown', onKey);
+      confirmOverlay.classList.add('show');
+      confirmOkBtn.focus();
+    });
+  }
+
   async function resetGroupDraw(srcBtn){
-    if(!confirm('Reset undian grup? Semua grup kembali belum diundi dan nomor urut dihapus.')) return;
     if(srcBtn) srcBtn.disabled = true;
+    const ok = await askConfirm({
+      title: 'Reset Undian Grup',
+      message: 'Semua grup kembali belum diundi dan nomor urut dihapus. Tindakan ini tidak bisa dibatalkan.',
+      okLabel: 'Reset Undian',
+    });
+    if(!ok){ if(srcBtn) srcBtn.disabled = false; return; }
     try{
       const { error } = await supabase.rpc('reset_group_draw');
       if (error) throw new Error(error.message);
@@ -613,8 +649,13 @@
   }
 
   async function clearGroupData(srcBtn){
-    if(!confirm('Hapus semua data Mode 2 (daftar grup)?')) return;
     if(srcBtn) srcBtn.disabled = true;
+    const ok = await askConfirm({
+      title: 'Hapus Semua Data Grup',
+      message: `Seluruh ${m2.groups.length} grup beserta nomor urutnya akan dihapus. Tindakan ini tidak bisa dibatalkan.`,
+      okLabel: 'Hapus Data',
+    });
+    if(!ok){ if(srcBtn) srcBtn.disabled = false; return; }
     try{
       const { error } = await supabase.rpc('clear_group_data');
       if (error) throw new Error(error.message);
