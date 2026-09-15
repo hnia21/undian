@@ -12,8 +12,12 @@ create table if not exists public.participants (
 create table if not exists public.groups (
   id    bigint generated always as identity primary key,
   name  text not null,
-  drawn boolean not null default false
+  drawn boolean not null default false,
+  order_seq int
 );
+
+-- idempotent: tambahkan kolom jika tabel sudah ada dari versi sebelumnya
+alter table public.groups add column if not exists order_seq int;
 
 create table if not exists public.group_members (
   group_id       bigint not null references public.groups(id) on delete cascade,
@@ -84,6 +88,7 @@ as $$
       'id',       g.id,
       'name',     g.name,
       'drawn',    g.drawn,
+      'order_seq', g.order_seq,
       'memberIds', coalesce((
         select jsonb_agg(m.participant_id order by m.participant_id)
         from public.group_members m
@@ -152,8 +157,14 @@ begin
   where m.group_id = g.id;
 
   if member_ns is not null then
-    update public.groups set drawn = true where id = g.id;
-    return jsonb_build_object('id', g.id, 'name', g.name, 'members', member_ns, 'done', false);
+    update public.groups
+    set drawn = true,
+        order_seq = (select coalesce(max(order_seq), 0) + 1 from public.groups where drawn)
+    where id = g.id;
+    return jsonb_build_object(
+      'id', g.id, 'name', g.name, 'members', member_ns, 'done', false,
+      'order', (select coalesce(max(order_seq), 0) from public.groups where drawn)
+    );
   end if;
 
   -- semua grup yang belum diundi (termasuk g) + sisa roster bebas
@@ -184,7 +195,10 @@ begin
     from unnest(chunk) a;
   end loop;
 
-  update public.groups set drawn = true where id = g.id;
+  update public.groups
+  set drawn = true,
+      order_seq = (select coalesce(max(order_seq), 0) + 1 from public.groups where drawn)
+  where id = g.id;
 
   select array_agg(p.name order by p.name) into member_ns
   from public.group_members m
@@ -197,7 +211,8 @@ begin
     'id',      g.id,
     'name',    g.name,
     'members', member_ns,
-    'done',    false
+    'done',    false,
+    'order',   (select coalesce(max(order_seq), 0) from public.groups where drawn)
   );
 end;
 $$;
@@ -212,7 +227,7 @@ set search_path = public
 as $$
 begin
   delete from public.group_members where true;
-  update public.groups set drawn = false where true;
+  update public.groups set drawn = false, order_seq = null where true;
 end;
 $$;
 

@@ -34,6 +34,14 @@
     </div>
 
     <div class="admin-section">
+      <h4>Daftar Peserta (Mode 2)</h4>
+      <p class="small-note">Tulis satu nama peserta per baris. Menyimpan peserta baru akan menghapus pengaturan grup lama.</p>
+      <textarea id="adminParticipantInput" rows="5" placeholder="Andi&#10;Budi&#10;Cici&#10;..."></textarea>
+      <button class="btn-primary" id="adminSaveParticipantsBtn" style="margin-top:6px;">Simpan Peserta</button>
+      <div class="chip-list" id="adminParticipantChips"></div>
+    </div>
+
+    <div class="admin-section">
       <h4>Atur Peserta per Grup (Mode 2)</h4>
       <p class="small-note">Centang peserta pada tiap grup lalu tekan Simpan. Grup yang tidak diatur akan otomatis mendapat peserta sisa secara acak saat diundi.</p>
       <div id="groupsAdmin"></div>

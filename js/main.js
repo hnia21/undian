@@ -71,9 +71,9 @@
   const mode1Tab = document.getElementById('mode1Tab');
   const mode2Tab = document.getElementById('mode2Tab');
 
-  const participantInput = document.getElementById('participantInput');
-  const saveParticipantsBtn = document.getElementById('saveParticipantsBtn');
-  const participantChips = document.getElementById('participantChips');
+  const adminParticipantInput = document.getElementById('adminParticipantInput');
+  const adminSaveParticipantsBtn = document.getElementById('adminSaveParticipantsBtn');
+  const adminParticipantChips = document.getElementById('adminParticipantChips');
   const groupInput = document.getElementById('groupInput');
   const saveGroupsBtn = document.getElementById('saveGroupsBtn');
   const groupChips = document.getElementById('groupChips');
@@ -87,6 +87,7 @@
 
   let spinning = false;
   let drawingGroup = false;
+  let shuffleOrdinal = 0;
 
   // ---------- MODE 2 STATE ----------
   const m2 = {
@@ -99,7 +100,7 @@
     statusMsg.textContent = 'Konfigurasi Supabase belum lengkap. Isi js/config.js terlebih dahulu.';
     drawBtn.disabled = true;
     applyMaxBtn.disabled = true;
-    saveParticipantsBtn.disabled = true;
+    adminSaveParticipantsBtn.disabled = true;
     saveGroupsBtn.disabled = true;
     drawGroupBtn.disabled = true;
     console.error('Supabase tidak terkonfigurasi: isi SUPABASE_URL dan SUPABASE_ANON_KEY di js/config.js');
@@ -266,7 +267,7 @@
         if (error) throw new Error(error.message);
         if(data){
           closePinPrompt();
-          openAdmin();
+          await openAdmin();
         } else {
           pinError.textContent = 'PIN salah.';
         }
@@ -329,10 +330,16 @@
   });
 
   // ---------- ADMIN PANEL ----------
-  function openAdmin(){
+  async function openAdmin(){
     if(!adminOverlay) return;
+    try{
+      await Promise.all([loadParticipants(), loadGroups()]);
+    }catch(e){
+      console.warn('Data Mode 2 gagal dimuat ulang:', e.message);
+    }
     renderAdminPool();
     renderAdminQueue();
+    renderAdminParticipantChips();
     renderGroupsAdmin();
     adminOverlay.classList.add('show');
   }
@@ -479,13 +486,14 @@
     m2.groups = data;
   }
 
-  function renderParticipantChips(){
-    participantChips.innerHTML = '';
+  function renderAdminParticipantChips(){
+    if(!adminParticipantChips) return;
+    adminParticipantChips.innerHTML = '';
     m2.participants.forEach(p=>{
       const s = document.createElement('span');
       s.className = 'chip';
       s.textContent = p.name;
-      participantChips.appendChild(s);
+      adminParticipantChips.appendChild(s);
     });
   }
   function renderGroupChips(){
@@ -497,29 +505,6 @@
       groupChips.appendChild(s);
     });
   }
-
-  saveParticipantsBtn.addEventListener('click', async ()=>{
-    const names = participantInput.value.split('\n').map(s=>s.trim()).filter(Boolean);
-    if(!names.length) return;
-    saveParticipantsBtn.disabled = true;
-    try{
-      const { error } = await supabase.rpc('save_participants', { names });
-      if (error) throw new Error(error.message);
-      participantInput.value = '';
-      await loadParticipants();
-      await loadGroups();
-      renderParticipantChips();
-      renderGroupChips();
-      renderGroupHistory();
-      renderGroupsAdmin();
-      groupStatusMsg.textContent = `Tersimpan ${m2.participants.length} peserta.`;
-    }catch(e){
-      console.error(e);
-      alert('Gagal menyimpan peserta: ' + e.message);
-    }finally{
-      saveParticipantsBtn.disabled = false;
-    }
-  });
 
   saveGroupsBtn.addEventListener('click', async ()=>{
     const names = groupInput.value.split('\n').map(s=>s.trim()).filter(Boolean);
@@ -546,6 +531,12 @@
   function showGroupResult(g){
     groupResult.classList.add('show');
     groupResult.innerHTML = '';
+    if(g.order){
+      const orderEl = document.createElement('div');
+      orderEl.className = 'grp-order';
+      orderEl.textContent = 'Undian ke-' + g.order;
+      groupResult.appendChild(orderEl);
+    }
     const nameEl = document.createElement('div');
     nameEl.className = 'grp-name';
     nameEl.textContent = g.name;
@@ -569,12 +560,19 @@
   function addGroupHistory(g){
     const row = document.createElement('div');
     row.className = 'hist-group';
-    row.innerHTML = `<div class="hg-name">${esc(g.name)}</div><div class="hg-members">${(g.members || []).map(esc).join(' · ') || '—'}</div>`;
+    const orderHtml = g.order ? `<div class="hg-order">Undian ke-${g.order}</div>` : '';
+    row.innerHTML = `${orderHtml}<div class="hg-name">${esc(g.name)}</div><div class="hg-members">${(g.members || []).map(esc).join(' · ') || '—'}</div>`;
     groupHistory.prepend(row);
   }
   function renderGroupHistory(){
     groupHistory.innerHTML = '';
-    m2.groups.filter(g=>g.drawn).slice().reverse().forEach(addGroupHistory);
+    m2.groups
+      .filter(g=>g.drawn)
+      .slice()
+      .sort((a,b)=>(a.order_seq || 0) - (b.order_seq || 0))
+      .forEach(g=>{
+        addGroupHistory(Object.assign({}, g, { order: g.order_seq }));
+      });
   }
 
   drawGroupBtn.addEventListener('click', async ()=>{
@@ -591,7 +589,8 @@
         }
         const shuffled = m2.participants.slice().sort(()=>Math.random()-0.5);
         const members = shuffled.map(p=>p.name);
-        showGroupResult({ name: 'Hasil Acak (Tanpa Grup)', members });
+        shuffleOrdinal++;
+        showGroupResult({ name: 'Hasil Acak (Tanpa Grup)', members, order: shuffleOrdinal });
       }else{
         const { data, error } = await supabase.rpc('draw_group');
         if (error) throw new Error(error.message);
@@ -618,6 +617,31 @@
   });
 
   // ---------- ADMIN MODE 2 ----------
+  if(adminOverlay){
+    adminSaveParticipantsBtn.addEventListener('click', async ()=>{
+      const names = adminParticipantInput.value.split('\n').map(s=>s.trim()).filter(Boolean);
+      if(!names.length) return;
+      adminSaveParticipantsBtn.disabled = true;
+      try{
+        const { error } = await supabase.rpc('save_participants', { names });
+        if (error) throw new Error(error.message);
+        adminParticipantInput.value = '';
+        await loadParticipants();
+        await loadGroups();
+        renderAdminParticipantChips();
+        renderGroupChips();
+        renderGroupHistory();
+        renderGroupsAdmin();
+        groupStatusMsg.textContent = `Tersimpan ${m2.participants.length} peserta (Mode 2).`;
+      }catch(e){
+        console.error(e);
+        alert('Gagal menyimpan peserta: ' + e.message);
+      }finally{
+        adminSaveParticipantsBtn.disabled = false;
+      }
+    });
+  }
+
   function renderGroupsAdmin(){
     if(!groupsAdmin) return;
     groupsAdmin.innerHTML = '';
@@ -626,7 +650,7 @@
       p.className = 'ga-empty';
       p.textContent = !m2.groups.length
         ? 'Belum ada grup — input di Mode 2 → "Nama Grup".'
-        : 'Belum ada peserta — input di Mode 2 → "Daftar Peserta".';
+        : 'Belum ada peserta — input di Panel Admin → "Daftar Peserta".';
       groupsAdmin.appendChild(p);
       return;
     }
@@ -722,7 +746,8 @@
         if (error) throw new Error(error.message);
         m2.participants = [];
         m2.groups = [];
-        renderParticipantChips();
+        shuffleOrdinal = 0;
+        renderAdminParticipantChips();
         renderGroupChips();
         renderGroupHistory();
         renderGroupsAdmin();
@@ -756,7 +781,7 @@
   // mode 2 (best-effort; tidak mengganggu mode 1 jika sekema belum ada)
   try{
     await Promise.all([loadParticipants(), loadGroups()]);
-    renderParticipantChips();
+    renderAdminParticipantChips();
     renderGroupChips();
     renderGroupHistory();
   }catch(e){

@@ -382,6 +382,18 @@
     margin-top:18px;
     width:100%;
   }
+  .modal textarea{
+    width:100%;
+    background:#06181a;
+    border:1px solid var(--panel-edge);
+    color:var(--cream);
+    padding:10px 12px;
+    border-radius:8px;
+    font-size:14px;
+    font-family:inherit;
+    resize:vertical;
+    margin-bottom:6px;
+  }
   .confetti-piece{
     position:fixed;
     top:-10px;
@@ -500,6 +512,21 @@
     font-weight:800;
     color:var(--gold);
     margin-bottom:14px;
+  }
+  .grp-order{
+    font-size:12px;
+    letter-spacing:0.08em;
+    color:var(--ok);
+    font-weight:700;
+    text-transform:uppercase;
+    margin-bottom:6px;
+  }
+  .hist-group .hg-order{
+    color:var(--muted);
+    font-size:11px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    margin-bottom:2px;
   }
   .group-result ul{
     list-style:none; margin:0; padding:0;
