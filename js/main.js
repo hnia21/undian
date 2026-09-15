@@ -87,7 +87,9 @@
   const noMapBody = document.getElementById('noMapBody');
   const addNoMapRowBtn = document.getElementById('addNoMapRowBtn');
   const saveNoMapBtn = document.getElementById('saveNoMapBtn');
+  const clearNoMapBtn = document.getElementById('clearNoMapBtn');
   const importNoMapBtn = document.getElementById('importNoMapBtn');
+  const appendNoMapBtn = document.getElementById('appendNoMapBtn');
   const noMapImport = document.getElementById('noMapImport');
   const confirmOverlay = document.getElementById('confirmOverlay');
   const confirmTitle = document.getElementById('confirmTitle');
@@ -648,6 +650,10 @@
       saveNoMapBtn.disabled = true;
       try{
         const rows = collectNoMap();
+        if(!rows.length){
+          alert('Tabel kosong — tidak ada yang disimpan. Tambahkan baris atau impor dari Excel.');
+          return;
+        }
         const { error } = await supabase.rpc('save_group_no_map', { rows });
         if (error) throw new Error(error.message);
         await loadNoMap();
@@ -661,30 +667,33 @@
         saveNoMapBtn.disabled = false;
       }
     });
-    if(importNoMapBtn && noMapImport){
-      importNoMapBtn.addEventListener('click', async ()=>{
+    function bindImport(btn, rpcName, verb){
+      if(!btn || !noMapImport) return;
+      btn.addEventListener('click', async ()=>{
         const rows = parseNoMapImport(noMapImport.value);
         if(!rows.length){
           alert('Tidak ada data valid — pastikan kolom pertama NO dan kolom kedua NAMA GRUP.');
           return;
         }
-        importNoMapBtn.disabled = true;
+        btn.disabled = true;
         try{
-          const { error } = await supabase.rpc('save_group_no_map', { rows });
+          const { error } = await supabase.rpc(rpcName, { rows });
           if (error) throw new Error(error.message);
           await loadNoMap();
           renderNoMap();
           renderGroupHistory();
-          groupStatusMsg.textContent = `Impor selesai: ${m2.noMap.length} entri tersimpan.`;
+          groupStatusMsg.textContent = `Impor ${verb}: ${m2.noMap.length} entri tersimpan.`;
           noMapImport.value = '';
         }catch(e){
           console.error(e);
           alert('Gagal impor: ' + e.message);
         }finally{
-          importNoMapBtn.disabled = false;
+          btn.disabled = false;
         }
       });
     }
+    bindImport(importNoMapBtn, 'save_group_no_map', '& timpa');
+    bindImport(appendNoMapBtn, 'append_group_no_map', '& tambah');
   }
 
   function saveGroupsFlow(srcBtn, srcInput, msg){
@@ -888,7 +897,7 @@
     if(srcBtn) srcBtn.disabled = true;
     const ok = await askConfirm({
       title: 'Hapus Semua Data Grup',
-      message: `Seluruh ${m2.groups.length} grup beserta nomor urutnya akan dihapus. Tindakan ini tidak bisa dibatalkan.`,
+      message: `Seluruh ${m2.groups.length} grup beserta nomor urutnya akan dihapus. Konfigurasi NO/NAMA di panel admin tetap disimpan. Tindakan ini tidak bisa dibatalkan.`,
       okLabel: 'Hapus Data',
     });
     if(!ok){ if(srcBtn) srcBtn.disabled = false; return; }
@@ -896,11 +905,12 @@
       const { error } = await supabase.rpc('clear_group_data');
       if (error) throw new Error(error.message);
       m2.groups = [];
-      m2.noMap = [];
+      await loadNoMap();
       refreshGroupViews();
       renderGroupHistory();
+      renderNoMap();
       groupResult.classList.remove('show');
-      groupStatusMsg.textContent = 'Data Mode 2 dihapus.';
+      groupStatusMsg.textContent = 'Data Mode 2 dihapus (konfigurasi NO tetap tersimpan).';
     }catch(e){
       console.error(e);
       alert('Gagal menghapus data: ' + e.message);
@@ -910,6 +920,32 @@
   }
   if(clearGroupDataMainBtn){
     clearGroupDataMainBtn.addEventListener('click', ()=>clearGroupData(clearGroupDataMainBtn));
+  }
+
+  async function clearGroupNoMap(srcBtn){
+    if(srcBtn) srcBtn.disabled = true;
+    const ok = await askConfirm({
+      title: 'Hapus Konfigurasi Nomor Urut',
+      message: `Seluruh ${m2.noMap.length} entri NO/NAMA (vlookup) di panel admin akan dihapus. Daftar & hasil undian grup tidak terpengaruh. Tindakan ini tidak bisa dibatalkan.`,
+      okLabel: 'Hapus Konfigurasi',
+    });
+    if(!ok){ if(srcBtn) srcBtn.disabled = false; return; }
+    try{
+      const { error } = await supabase.rpc('clear_group_no_map');
+      if (error) throw new Error(error.message);
+      await loadNoMap();
+      renderNoMap();
+      renderGroupHistory();
+      groupStatusMsg.textContent = 'Konfigurasi nomor urut (vlookup) dihapus.';
+    }catch(e){
+      console.error(e);
+      alert('Gagal menghapus konfigurasi: ' + e.message);
+    }finally{
+      if(srcBtn) srcBtn.disabled = false;
+    }
+  }
+  if(clearNoMapBtn){
+    clearNoMapBtn.addEventListener('click', ()=>clearGroupNoMap(clearNoMapBtn));
   }
 
   // ---------- ADMIN MODE 2 ----------

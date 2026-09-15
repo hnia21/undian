@@ -37,6 +37,10 @@ create table if not exists public.group_no_map (
 
 alter table public.group_no_map enable row level security;
 
+-- Nama grup unik (case-insensitive) agar bisa di-upsert saat tambah data.
+create unique index if not exists group_no_map_name_key
+  on public.group_no_map (lower(btrim(name)));
+
 -- ---------- RPC ----------
 
 -- Ganti seluruh daftar grup.
@@ -129,6 +133,8 @@ end;
 $$;
 
 -- Hapus semua data mode 2 (daftar grup).
+-- Catatan: konfigurasi NO (group_no_map) TIDAK dihapus di sini, agar data
+-- vlookup admin tidak hilang saat membersihkan grup untuk ronde baru.
 create or replace function public.clear_group_data()
 returns void
 language plpgsql
@@ -137,6 +143,17 @@ set search_path = public
 as $$
 begin
   delete from public.groups where true;
+end;
+$$;
+
+-- Hapus hanya konfigurasi NO + nama grup (vlookup) milik admin.
+create or replace function public.clear_group_no_map()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
   delete from public.group_no_map where true;
 end;
 $$;
@@ -172,6 +189,29 @@ begin
     end if;
     insert into public.group_no_map (no, name)
     values (coalesce((r->>'no')::int, 0), btrim(r->>'name'));
+  end loop;
+end;
+$$;
+
+-- Tambah/update (upsert by nama grup tanpa menghapus data lama).
+create or replace function public.append_group_no_map(rows jsonb)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  r jsonb;
+begin
+  for r in select * from jsonb_array_elements(rows)
+  loop
+    if r->>'name' is null or btrim(r->>'name') = '' then
+      continue;
+    end if;
+    insert into public.group_no_map (no, name)
+    values (coalesce((r->>'no')::int, 0), btrim(r->>'name'))
+    on conflict (lower(btrim(name)))
+    do update set no = excluded.no;
   end loop;
 end;
 $$;
