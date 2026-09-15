@@ -414,8 +414,10 @@
       }
       addOverrideBtn.disabled = true;
       try{
-        const { error } = await supabase.rpc('add_override', { nums: added });
-        if (error) throw new Error(error.message);
+        for (const n of added){
+          const { error } = await supabase.rpc('add_override', { nums: [n] });
+          if (error) throw new Error(error.message);
+        }
         await loadState();
         renderAdminQueue();
         if(skipped.length){
