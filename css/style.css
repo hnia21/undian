@@ -548,6 +548,9 @@
   }
   #drawGroupBtn{
     margin-top:22px;
+    margin-left:auto;
+    margin-right:auto;
+    display:block;
     background:linear-gradient(180deg, var(--gold), var(--gold-dim));
     color:#241a05;
     font-weight:800;
