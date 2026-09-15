@@ -81,8 +81,6 @@
   const groupResult = document.getElementById('groupResult');
   const groupHistory = document.getElementById('groupHistory');
   const groupsAdmin = document.getElementById('groupsAdmin');
-  const groupsForceInput = document.getElementById('groupsForceInput');
-  const saveGroupsForceBtn = document.getElementById('saveGroupsForceBtn');
   const resetGroupDrawBtn = document.getElementById('resetGroupDrawBtn');
   const clearGroupDataBtn = document.getElementById('clearGroupDataBtn');
   const logoutBtn = document.getElementById('logoutBtn');
@@ -362,7 +360,6 @@
     }
     renderAdminPool();
     renderAdminQueue();
-    renderGroupsForceInput();
     renderGroupsAdmin();
     renderNoMap();
     adminOverlay.classList.add('show');
@@ -526,7 +523,6 @@
     renderGroupChips();
     renderGroupHistory();
     renderGroupsAdmin();
-    renderGroupsForceInput();
     renderNoMap();
   }
 
@@ -917,55 +913,6 @@
   }
 
   // ---------- ADMIN MODE 2 ----------
-  function groupPosition(g){
-    return m2.groups.findIndex(x=>x.id === g.id) + 1;
-  }
-  function renderGroupsForceInput(){
-    if(!groupsForceInput) return;
-    const q = m2.groups
-      .filter(g=>g.forceSeq != null)
-      .sort((a,b)=>(a.forceSeq||0) - (b.forceSeq||0))
-      .map(g=>groupPosition(g));
-    groupsForceInput.value = q.join(', ');
-  }
-
-  if(adminOverlay){
-    saveGroupsForceBtn.addEventListener('click', async ()=>{
-      saveGroupsForceBtn.disabled = true;
-      try{
-        const raw = groupsForceInput.value.trim();
-        const ids = [];
-        const skipped = [];
-        const seen = new Set();
-        if(raw){
-          raw.split(/[,\s]+/).filter(Boolean).forEach(part=>{
-            const n = parseInt(part, 10);
-            const g = m2.groups[n - 1];
-            if(!g){ skipped.push(part); return; }
-            if(g.drawn){ skipped.push(part); return; }
-            if(seen.has(g.id)){ skipped.push(part); return; }
-            seen.add(g.id);
-            ids.push(g.id);
-          });
-        }
-        const { error } = await supabase.rpc('set_groups_forced', { p_group_ids: ids });
-        if (error) throw new Error(error.message);
-        await loadGroups();
-        renderGroupsForceInput();
-        renderGroupsAdmin();
-        groupStatusMsg.textContent = ids.length
-          ? `Antrian undian grup disimpan: ${ids.length} grup.`
-          : 'Mode acak murni (tanpa antrian).';
-        if(skipped.length) alert(`Dilewati: ${skipped.join(', ')} (nomor di luar daftar, sudah diundi, atau duplikat).`);
-      }catch(e){
-        console.error(e);
-        alert('Gagal menyimpan antrian grup: ' + e.message);
-      }finally{
-        saveGroupsForceBtn.disabled = false;
-      }
-    });
-  }
-
   function renderGroupsAdmin(){
     if(!groupsAdmin) return;
     groupsAdmin.innerHTML = '';
@@ -988,9 +935,10 @@
       head.appendChild(num);
       b.textContent = g.name;
       const st = document.createElement('span');
+      const plannedNo = g.drawn ? null : noForGroup(g.name);
       st.textContent = g.drawn
         ? `diundi ke-${g.order_seq || '?'}`
-        : (g.forceSeq != null ? `antrian urutan ${g.forceSeq}` : 'belum diundi');
+        : (plannedNo != null ? `belum diundi (urutan ${plannedNo})` : 'belum diundi');
       head.append(b, st);
       box.appendChild(head);
       groupsAdmin.appendChild(box);

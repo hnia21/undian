@@ -42,7 +42,7 @@
 
       <div class="admin-section">
         <h4>Status Undian Grup (Mode 2)</h4>
-        <p class="small-note">Input di bawah hanya tersimpan sebagai data admin dan <b>tidak muncul di halaman utama</b>. Saat anda mengetik nama grup yang sama di halaman utama lalu mengocok, nomor urut yang keluar otomatis mengikuti <b>NO</b> yang diatur di sini (vlookup). Edit langsung, tambah/hapus baris, lalu Simpan.</p>
+        <p class="small-note">Input di bawah hanya tersimpan sebagai data admin dan <b>tidak muncul di halaman utama</b>. Data ini adalah <b>vlookup undian grup</b>: saat nama grup yang sama diketik di halaman utama, urutan pengundian dan nomor yang tampil mengikuti <b>NO</b> di sini (NO terkecil diundi duluan). Edit langsung, tambah/hapus baris, atau tempel dari Excel, lalu Simpan.</p>
         <div class="import-box">
           <h4 style="font-size:13px;margin-bottom:6px;">Impor Dari Excel (Input Massal)</h4>
           <p class="small-note">Copy sel dari Excel lalu tempel di kotak bawah. Kolom pertama = <b>NO</b>, kolom kedua = <b>NAMA GRUP</b> (pisah kolom pakai tab / koma / titik-koma; tiap baris = satu grup). Baris header seperti "NO / NAMA GRUP" otomatis dilewati.</p>
@@ -59,11 +59,6 @@
           <button class="btn-ghost" id="addNoMapRowBtn" style="flex:0 0 auto;">Tambah Baris</button>
           <button class="btn-primary" id="saveNoMapBtn" style="flex:1;">Simpan Nomor Urut</button>
         </div>
-        <div style="margin-top:18px;border-top:1px solid var(--panel-edge);padding-top:14px;"></div>
-        <h4 style="font-size:13px;">Atur Hasil Undian Grup</h4>
-        <p class="small-note">Masukkan urutan undian berdasarkan <b>nomor urut grup</b> pada daftar di bawah, dipisahkan koma. Contoh: <span style="font-family:monospace">3, 1, 2</span>. Kosongkan untuk kembali ke mode acak murni.</p>
-        <input type="text" id="groupsForceInput" placeholder="Contoh: 3, 1, 2">
-        <button class="btn-primary" id="saveGroupsForceBtn" style="margin-top:8px;">Simpan Antrian Grup</button>
         <div style="margin-top:18px;border-top:1px solid var(--panel-edge);padding-top:14px;"></div>
         <div id="groupsAdmin"></div>
         <div class="row">

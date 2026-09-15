@@ -16,14 +16,12 @@ create table if not exists public.groups (
   id   bigint generated always as identity primary key,
   name text not null,
   drawn boolean not null default false,
-  order_seq int,
-  force_seq int
+  order_seq int
 );
 
--- idempotent: tambahkan kolom jika tabel sudah ada dari versi sebelumnya
+-- idempotent: pertahankan order_seq, hapus kolom antrian lama
 alter table public.groups add column if not exists order_seq int;
-alter table public.groups add column if not exists force_seq int;
--- migrasi: kolom checkbox lama diganti kolom urutan angka
+alter table public.groups drop column if exists force_seq;
 alter table public.groups drop column if exists forced;
 
 alter table public.groups enable row level security;
@@ -69,36 +67,19 @@ as $$
       'id',       id,
       'name',     name,
       'drawn',    drawn,
-      'order_seq', order_seq,
-      'forceSeq', force_seq
+      'order_seq', order_seq
     ) order by id), '[]'::jsonb)
   from public.groups;
 $$;
 
--- Admin: tentukan urutan undian berikutnya lewat nomor urut grup
--- (posisi grup dalam daftar). Array berisi id grup sesuai urutan
--- antrian; nilainya disimpan ke force_seq. Antrian kosong = acak.
-create or replace function public.set_groups_forced(p_group_ids bigint[])
-returns void
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  i   int := 1;
-  pid bigint;
-begin
-  update public.groups set force_seq = null where true;
-  foreach pid in array p_group_ids loop
-    update public.groups set force_seq = i
-    where id = pid
-      and not drawn;
-    i := i + 1;
-  end loop;
-end;
-$$;
+-- Fungsi antrian (force_seq) sudah tidak dipakai lagi: urutan undian kini
+-- mengikuti Konfigurasi NO (vlookup) pada draw_group.
+drop function if exists public.set_groups_forced(bigint[]);
 
--- Undi satu grup berikutnya secara acak dari yang belum diundi.
+-- Undi satu grup berikutnya dari yang belum diundi.
+-- Urutan ditentukan oleh Konfigurasi NO dari admin (vlookup):
+-- yang ada di group_no_map dengan NO terkecil diundi duluan,
+-- grup tanpa konfigurasi menyusul setelahnya (acak-praktis = urutan id).
 -- Setiap grup yang terpilih mendapat nomor urut = urutan undiannya.
 create or replace function public.draw_group()
 returns jsonb
@@ -109,10 +90,12 @@ as $$
 declare
   g public.groups%rowtype;
 begin
-  select * into g
-  from public.groups
-  where not drawn
-  order by (force_seq is null) asc, force_seq asc, id asc
+  select g.id, g.name into g
+  from public.groups g
+  left join public.group_no_map m
+    on lower(btrim(m.name)) = lower(btrim(g.name))
+  where not g.drawn
+  order by (m.no is null) asc, m.no asc, g.id asc
   limit 1;
 
   if g.id is null then
@@ -141,7 +124,7 @@ security definer
 set search_path = public
 as $$
 begin
-  update public.groups set drawn = false, order_seq = null, force_seq = null where true;
+  update public.groups set drawn = false, order_seq = null where true;
 end;
 $$;
 
