@@ -515,7 +515,7 @@
     border:1px solid var(--panel-edge);
     border-radius:16px;
     padding:18px;
-    margin-bottom:16px;
+    margin:6px auto 20px;
   }
   .mode2-panel h3{
     margin:0 0 4px;
@@ -571,6 +571,13 @@
     min-height:18px;
     text-align:center;
   }
+  .mode2-actions{
+    width:min(92vw, 460px);
+    display:flex;
+    gap:10px;
+    margin:26px auto 34px;
+  }
+  .mode2-actions button{ flex:1; }
   .group-result{
     display:none;
     width:min(92vw, 460px);
